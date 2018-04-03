@@ -57,3 +57,13 @@ Plug 'itchyny/lightline.vim'    " status line
 
 call plug#end()
 
+
+""""""""""""""""""""""""""""""""""""""
+"           COLORSCHEME              "
+""""""""""""""""""""""""""""""""""""""
+
+colorscheme onedark
+highlight Normal ctermbg=none
+highlight Comment ctermfg=blue cterm=bold
+highlight LineNr ctermfg=white
+highlight CursorLineNr ctermfg=gray cterm=bold
