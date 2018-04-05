@@ -1,4 +1,18 @@
 """"""""""""""""""""""""""""""""""""""
+"            PLUGINS                 "
+""""""""""""""""""""""""""""""""""""""
+
+call plug#begin('~/.local/share/nvim/plugged')
+
+Plug 'chriskempson/base16-vim'  " colorscheme
+Plug 'joshdick/onedark.vim'     " colorscheme
+Plug 'itchyny/lightline.vim'    " status line
+Plug 'szw/vim-maximizer'        " tmux C-z
+
+call plug#end()
+
+
+""""""""""""""""""""""""""""""""""""""
 "               GENERAL              "
 """"""""""""""""""""""""""""""""""""""
 
@@ -37,6 +51,11 @@ nnoremap <esc> : noh<return><esc>   " unhighligh last match
 set foldenable
 set foldmethod=indent  " fold based on indent level
 
+
+""""""""""""""""""""""""""""""""""""""
+"           KEYBINDINGS              "
+""""""""""""""""""""""""""""""""""""""
+
 " move vertically by visual line
 nnoremap j gj
 nnoremap k gk
@@ -44,26 +63,18 @@ nnoremap k gk
 " maps gV to highlight last inserted text
 nnoremap gV `[v`]
 
-
-""""""""""""""""""""""""""""""""""""""
-"            PLUGINS                 "
-""""""""""""""""""""""""""""""""""""""
-
-call plug#begin('~/.local/share/nvim/plugged')
-
-Plug 'chriskempson/base16-vim'  " colorscheme
-Plug 'joshdick/onedark.vim'     " colorscheme
-Plug 'itchyny/lightline.vim'    " status line
-
-call plug#end()
+" maps vim-maximizer plugin shortcut to match tmux
+nnoremap <silent><C-w>z :MaximizerToggle<CR>
+vnoremap <silent><C-w>z :MaximizerToggle<CR>gv
+inoremap <silent><C-w>z <C-o>:MaximizerToggle<CR>
 
 
 """"""""""""""""""""""""""""""""""""""
 "           COLORSCHEME              "
 """"""""""""""""""""""""""""""""""""""
-
 colorscheme onedark
 highlight Normal ctermbg=none
 highlight Comment ctermfg=blue cterm=bold
 highlight LineNr ctermfg=white
 highlight CursorLineNr ctermfg=gray cterm=bold
+
