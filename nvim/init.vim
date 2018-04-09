@@ -45,11 +45,14 @@ set wildmenu
 " enhance searches
 set incsearch    " search as characters are typed
 set hlsearch     " highlight matches
-nnoremap <esc> : noh<return><esc>   " unhighligh last match
 
 " folding code
 set foldenable
 set foldmethod=indent  " fold based on indent level
+
+" open splits towards the bottom right corner
+set splitbelow
+set splitright
 
 
 """"""""""""""""""""""""""""""""""""""
@@ -66,7 +69,10 @@ nnoremap gV `[v`]
 " maps vim-maximizer plugin shortcut to match tmux
 nnoremap <silent><C-w>z :MaximizerToggle<CR>
 vnoremap <silent><C-w>z :MaximizerToggle<CR>gv
-inoremap <silent><C-w>z <C-o>:MaximizerToggle<CR>
+" inoremap <silent><C-w>z <C-o>:MaximizerToggle<CR>
+
+" unhighlight last match
+nnoremap <esc> :noh<return><esc>   
 
 
 """"""""""""""""""""""""""""""""""""""
