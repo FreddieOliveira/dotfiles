@@ -1,11 +1,15 @@
 # If you come from bash you might have to change your $PATH.
-export PATH=$HOME/bin:$HOME/platform-tools:/usr/local/bin:$PATH
+export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH=/home/freddie/.oh-my-zsh
 
-# export TERM="xterm-256color"
-# force_color_prompt=yes
+# You may need to manually set your language environment
+export LANG=pt_BR.UTF-8
+
+export MANPATH="/usr/local/man:$MANPATH"
+export EDITOR='vim'
+export TERM="tmux-256color"
 
 # POWERLEVEL9K Settings
 # Set name of the theme to load. Optionally, if you set this to "random"
@@ -28,10 +32,10 @@ POWERLEVEL9K_STATUS_OK_FOREGROUND="green"
 POWERLEVEL9K_STATUS_ERROR_BACKGROUND="black"
 POWERLEVEL9K_STATUS_ERROR_FOREGROUND="red"
 POWERLEVEL9K_TIME_FORMAT="%D{\uF253 %H:%M  \uF073 %d/%m/%y}"
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(status background_jobs root_indicator context dir vcs)
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(time)
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(command_execution_time status background_jobs root_indicator context dir)
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(vcs)
 POWERLEVEL9K_CHANGESET_HASH_LENGTH=6
-POWERLEVEL9K_PROMPT_ON_NEWLINE=true
+POWERLEVEL9K_PROMPT_ON_NEWLINE="true"
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=1
 POWERLEVEL9K_SHORTEN_STRATEGY=truncate_folders
 
@@ -55,10 +59,10 @@ POWERLEVEL9K_SHORTEN_STRATEGY=truncate_folders
 # DISABLE_AUTO_TITLE="true"
 
 # Uncomment the following line to enable command auto-correction.
-ENABLE_CORRECTION="true"
+# ENABLE_CORRECTION="true"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
-# COMPLETION_WAITING_DOTS="true"
+COMPLETION_WAITING_DOTS="true"
 
 # Uncomment the following line if you want to disable marking untracked files
 # under VCS as dirty. This makes repository status check for large repositories
@@ -68,7 +72,7 @@ ENABLE_CORRECTION="true"
 # Uncomment the following line if you want to change the command execution time
 # stamp shown in the history command output.
 # The optional three formats: "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# HIST_STAMPS="mm/dd/yyyy"
+HIST_STAMPS="dd.mm.yyyy"
 
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
@@ -77,24 +81,11 @@ ENABLE_CORRECTION="true"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-ZSH_TMUX_AUTOSTART=true
+ZSH_TMUX_AUTOSTART="true"
 plugins=(git command-not-found zsh-autosuggestions zsh-syntax-highlighting tmux)
 
 source $ZSH/oh-my-zsh.sh
 
-# User configuration
-
-# export MANPATH="/usr/local/man:$MANPATH"
-
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='mvim'
-# fi
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -110,7 +101,6 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-# enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
