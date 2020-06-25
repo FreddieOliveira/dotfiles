@@ -10,9 +10,9 @@ bindkey -v
 # updates cursor shape on different modes
 function zle-keymap-select() {
   if [[ $KEYMAP == 'vicmd' ]]; then
-    printf '\033[?25h\033[2 q'
+    printf '\033[2 q'
   elif [[ $KEYMAP =~ (viins|main) ]]; then
-    printf '\033[?25h\033[6 q'
+    printf '\033[6 q'
   fi
 }
 
@@ -34,7 +34,7 @@ function fix_cursor() {
   printf '\033[6 q'
 }
 
-# exec fix_cursor function evertime before drawing the prompt
+# exec fix_cursor function every time before drawing the prompt
 precmd_functions+=(fix_cursor)
 
 # register the widgets
@@ -62,38 +62,42 @@ bindkey -M viins '^N' down-line-or-beginning-search
 bindkey -M viins '^[OA' up-line-or-beginning-search
 bindkey -M viins '^[OB' down-line-or-beginning-search
 
-# allow ctrl-r and ctrl-s to search the history
+# ctrl-r and ctrl-s to search the history
 bindkey '^R' history-incremental-search-backward
 bindkey '^S' history-incremental-search-forward
 
-# allow ctrl-a and ctrl-e to move to beginning/end of line
+# ctrl-a and ctrl-e to move to beginning/end of line
 bindkey '^A' beginning-of-line
 bindkey '^E' end-of-line
 
-# make ctrl-u cut line from the cursor to its
-# beggining instead of cutting the whole line
+# ctrl-u cut line from the cursor to its
+# beginning instead of cutting the whole line
 bindkey -M viins '^U' backward-kill-line
 
-# allow dd to cut the whole line instead of just deleting it
+# ctrl-k cut the line from the cursor to the end in insert mode
+bindkey -M viins '^K' kill-line
+
+# dd to cut the whole line instead of just deleting it
 bindkey -M vicmd 'dd' kill-whole-line
 
-# allow alt-. to insert the last word from the previous command (!$)
+# alt-. to insert the last word from the previous command (!$)
 bindkey -M viins '^[.' insert-last-word
 
-# allow alt-d to cut the current word in insert mode
+# alt-d to cut the current word in insert mode
 bindkey -M viins '^[d' kill-word
 
-# allow ctrl-y to paste when in insert mode
+# ctrl-y to paste when in insert mode
 bindkey -M viins '^Y' yank
 
-# allow alt-f to move one word forward while in insert mode
+# alt-b and alt-f to move one word backward/forward in insert mode
+bindkey -M viins '^[b' backward-word
 bindkey -M viins '^[f' forward-word
 
 # allow to move back and forward chars while in insert mode
 bindkey -M viins '^F' forward-char
 bindkey -M viins '^B' backward-char
 
-# allow to ctrl-d to delete the current char when in insert mode
+# to ctrl-d to delete the current char when in insert mode
 bindkey -M viins '^D' delete-char
 
 # delete backward char even past the point where entered in insert mode
@@ -102,9 +106,9 @@ bindkey -M viins '^?' backward-delete-char
 # delete backward word even past the point where entered in insert mode
 bindkey -M viins '^W' backward-kill-word
 
-# ctrl-k cut the line from the cursor to the end in insert mode
-bindkey -M viins '^K' kill-line
-
 # do history expansion with a space
 bindkey ' ' magic-space
+
+# TAB in normal mode performs a fasd expansiom
+bindkey -M vicmd '^I' fasd-complete
 
