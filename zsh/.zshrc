@@ -5,7 +5,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # export MANPATH="/usr/local/man:$MANPATH"
 export EDITOR='nvim'
 export TERM='tmux-256color'
-export FZF_DEFAULT_OPTS="--height=75% --tiebreak=begin --preview-window=down:80%:wrap:hidden --preview='bat --style=numbers --color=always --line-range=:200 {}' --bind=space:toggle-preview --keep-right"
+export FZF_DEFAULT_OPTS="--height=75% --tiebreak=begin --preview-window=down:80%:wrap:hidden --preview='preview.sh {}' --bind=space:toggle-preview --keep-right"
 #########################################################
 #              GLOBAL OH-MY-ZSH SETTINGS {{{1
 #########################################################
@@ -83,7 +83,7 @@ local -A ctxt=(\"\${(@ps:\2:)CTXT}\")
 local realpath=\$(eval echo \${ctxt[IPREFIX]}\${ctxt[hpre]}\$in)
 "
 zstyle ':fzf-tab:complete:*:*' extra-opts \
-    --preview=$extract";preview.zsh \$realpath"
+    --preview=$extract";preview.sh \$realpath"
 # prevent populating fzf query. See https://github.com/Aloxaf/fzf-tab/issues/99
 zstyle ':fzf-tab:*' query-string prefix first
 ################################
