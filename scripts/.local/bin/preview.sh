@@ -1,33 +1,35 @@
 #!/bin/env bash
 
+usage() {
+  printf "Usage:\t%s <filename | ->\n" "${0##*/}"
+  printf "\nPreview filename in console. Its type will be inferred from its extension\nwith no further analysis. If filename doesn't\
+ have an extension, its type\nwill be inferred using file command, if available. If - is given instead,\nthe input will be read from stdin.\n"
+}
+
 exec_or_fail() {
     if command -v "${1}" >/dev/null 2>&1; then
-        "${@}" 2>/dev/null
+        eval "${*}" 2>/dev/null
         return "${?}"
     fi
     # error
     return 1
 }
 
-handle_unsupported_extensions() {
-    if [ -d "${file_path}" ] && command -v tree >/dev/null 2>&1; then
-        tree -C "${file_path}" | head -100
-    else
-        ls -alh "${file_path}"
-        echo ''
-        exec_or_fail file "${file_path}"
-    fi
-}
-
-handle_supported_extensions() {
+handle_file_extensions() {
     local file_path="${1}"
     local file_extension="${2}"
 
     case "${file_extension}" in
+        ## Text
+        build|c|cpp|go|h|hpp|java|log|py|sh|txt)
+            exec_or_fail bat --style=numbers --color=always \
+                --line-range=:200 "${file_path}" && return 0
+            ;;
+
         ## Image
         bmp|gif|jpg|jpeg|png)
             exec_or_fail img2txt -f utf8 -d none -g 0.6 \
-              -W $(("${COLUMNS}" - 6)) "${file_path}" && return 0
+              -W $((${COLUMNS} - 6)) "${file_path}" && return 0
             ;;
 
         ## Archive
@@ -84,7 +86,7 @@ handle_supported_extensions() {
         ## HTML
         htm|html|xhtml)
             ## Preview as text conversion
-            exec_or_fail w3m -dump "${file_path}" && return 0
+            exec_or_fail w3m -dump -cols $(("${COLUMNS}" - 6)) -o display_link_number=true "${file_path}" && return 0
             exec_or_fail lynx -dump -- "${file_path}" && return 0
             exec_or_fail elinks -dump "${file_path}" && return 0
             exec_or_fail pandoc -s -t markdown -- "${file_path}" && return 0
@@ -103,9 +105,16 @@ handle_supported_extensions() {
             exec_or_fail exiftool "${file_path}" && return 0
             ;;
 
-        * )
-            exec_or_fail bat --style=numbers --color=always \
-                --line-range=:200 "${file_path}" && return 0
+        ## unsupported extension
+        *)
+            if [ -d "${file_path}" ]; then
+                exec_or_fail head /dev/null && \
+                exec_or_fail tree -C ${file_path} \| head -100 && return 0
+            else
+                ls -alh "${file_path}"
+                echo ''
+                exec_or_fail file -L "${file_path}" && return 0
+            fi
             ;;
     esac
     # error
@@ -113,12 +122,41 @@ handle_supported_extensions() {
 }
 
 main() {
-    local file_path="${1}"
-    local file_extension="$(tr '[:upper:]' '[:lower:]' <<<"${file_path##*.}")"
+    local file_path file_extension regex temp_dir ret
 
-    handle_supported_extensions "${file_path}" "${file_extension}" || \
-        handle_unsupported_extensions
+    (( ${#} != 1 )) && usage && exit 2
+
+    file_path="${1}"
+    regex=".*\.([^/]+$)"
+
+    if [[ ${file_path} == '-' ]]; then
+        temp_dir=$(mktemp -d)
+        cat ${2} > ${temp_dir}/file
+        file_path=${temp_dir}/file
+    fi
+
+    # try to get extension from file name
+    if [[ ${file_path} =~ ${regex} ]]; then
+        file_extension=${BASH_REMATCH[1]}
+    # try to get extension from mime types list
+    elif [[ -f ${BASH_SOURCE[0]%/*}/media-types.txt ]] && \
+      command -v file >/dev/null 2>&1; then
+        file_extension=$(grep "^$(file -b --mime-type ${file_path}) [^/]\+$" ${BASH_SOURCE[0]%/*}/media-types.txt)
+        file_extension=${file_extension##* }
+        # creates a symlink with proper extension if any
+        if [[ ${file_extension} ]]; then
+            [[ -z ${temp_dir} ]] && temp_dir=$(mktemp -d)
+            cp -s ${file_path} ${temp_dir}/file.${file_extension}
+            file_path=${temp_dir}/file.${file_extension}
+        fi
+    fi
+
+    file_extension=$(tr '[:upper:]' '[:lower:]' <<< "${file_extension}")
+    handle_file_extensions "${file_path}" "${file_extension}"
+    ret=${?}
+    rm -rf ${temp_dir}
+    exit ${ret}
 }
 
-shopt -s checkwinsize; (:);
+shopt -s checkwinsize; (:) # make COLUMNS env var available
 main "${@}"
