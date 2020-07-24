@@ -20,6 +20,8 @@ Plug 'honza/vim-snippets'              " ultisnips provider
 Plug 'lervag/vimtex'                   " LaTeX integration
 Plug 'justinmk/vim-sneak'              " quick cursor jump around
 Plug 'ryanoasis/vim-devicons'          " file type icons
+Plug 'junegunn/fzf'                    " fzf integration
+Plug 'junegunn/fzf.vim'                " fzf integration
 "Plug 'amix/vim-zenroom2'               " .md colorscheme when goyo is on
 "Plug 'iamcco/markdown-preview.nvim'    " web browser .md preview
 "Plug 'Valloric/YouCompleteMe'          " autocompletion
@@ -28,6 +30,13 @@ call plug#end()
 """"""""""""""""""""""""""""""""""""""
 "           PLUGINS CONFIG {{{1
 """"""""""""""""""""""""""""""""""""""
+">----| bufferline {{{2
+let g:lightline_buffer_enable_devicons = 1
+let g:lightline_buffer_show_bufnr = 1
+let g:lightline_buffer_fname_mod = ':t'
+let g:lightline_buffer_separator_right_icon=''
+let g:lightline_buffer_separator_left_icon=''
+
 ">----| deoplete-clang {{{2
 let g:deoplete#sources#clang#libclang_path = '/data/data/com.termux/files/usr/lib/libclang.so'
 let g:deoplete#sources#clang#clang_header = '/data/data/com.termux/files/usr/lib/clang'
@@ -36,10 +45,78 @@ let g:deoplete#sources#clang#clang_header = '/data/data/com.termux/files/usr/lib
 " use deoplete
 let g:deoplete#enable_at_startup = 1
 
-">----| ultilsnips {{{2
-let g:UltiSnipsJumpForwardTrigger="<Tab>"
-let g:UltiSnipsJumpBackwardTrigger="<S-Tab>"
-let g:UltiSnipsExpandTrigger="<Tab>"
+">----| fzf {{{2
+" This is the default extra key bindings
+let g:fzf_action = {
+  \ 'ctrl-t': 'tab split',
+  \ 'ctrl-x': 'split',
+  \ 'ctrl-v': 'vsplit' }
+
+" Enable per-command history.
+" CTRL-N and CTRL-P will be automatically bound to next-history and
+" previous-history instead of down and up. If you don't like the change,
+" explicitly bind the keys to down and up in your $FZF_DEFAULT_OPTS.
+let g:fzf_history_dir = '~/.local/share/fzf-history'
+let g:fzf_buffers_jump = 1
+let g:fzf_tags_command = 'ctags -R'
+" Border color
+let g:fzf_layout = {'up':'~90%', 'window': { 'width': 0.8, 'height': 0.8,'yoffset':0.5,'xoffset': 0.5, 'highlight': 'float', 'border': 'sharp' } }
+let g:fzf_preview_window = 'down:60%'
+
+let $FZF_DEFAULT_OPTS = '--cycle --preview-window=down:60%:wrap:hidden --preview="preview.sh {}" --bind=ctrl-space:toggle-preview --layout=reverse --inline-info'
+let $FZF_DEFAULT_COMMAND="rg --files --hidden --glob '!.git/**'"
+"-g '!{node_modules,.git}'
+
+" Customize fzf colors to match your color scheme
+let g:fzf_colors =
+\ { 'fg':      ['fg', 'Normal'],
+  \ 'bg':      ['bg', 'Normal'],
+  \ 'hl':      ['fg', 'Comment'],
+  \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
+  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
+  \ 'hl+':     ['fg', 'Statement'],
+  \ 'info':    ['fg', 'PreProc'],
+  \ 'border':  ['fg', 'Ignore'],
+  \ 'prompt':  ['fg', 'Conditional'],
+  \ 'pointer': ['fg', 'Exception'],
+  \ 'marker':  ['fg', 'Keyword'],
+  \ 'spinner': ['fg', 'Label'],
+  \ 'header':  ['fg', 'Comment'] }
+
+"Get Files
+command! -bang -nargs=? -complete=dir Files
+    \ call fzf#vim#files(<q-args>, {'options': ['--preview-window=down:60%:wrap']}, <bang>0)
+
+
+" Get text in files with Rg
+" command! -bang -nargs=* Rg
+"   \ call fzf#vim#grep(
+"   \   "rg --column --line-number --no-heading --color=always --smart-case --glob '!.git/**' ".shellescape(<q-args>), 1,
+
+ " Make Ripgrep ONLY search file contents and not filenames
+command! -bang -nargs=* Rg
+  \ call fzf#vim#grep(
+  \   'rg --column --line-number --hidden --smart-case --no-heading --color=always '.shellescape(<q-args>), 1,
+  \   <bang>0 ? fzf#vim#with_preview({'options': '--delimiter : --nth 4..'}, 'up:60%')
+  \           : fzf#vim#with_preview({'options': '--delimiter : --nth 4.. -e'}, 'down:50%', '?'),
+  \   <bang>0)
+
+" Ripgrep advanced
+function! RipgrepFzf(query, fullscreen)
+  let command_fmt = 'rg --column --line-number --no-heading --color=always --smart-case %s || true'
+  let initial_command = printf(command_fmt, shellescape(a:query))
+  let reload_command = printf(command_fmt, '{q}')
+  let spec = {'options': ['--phony', '--query', a:query, '--bind', 'change:reload:'.reload_command]}
+  call fzf#vim#grep(initial_command, 1, fzf#vim#with_preview(spec), a:fullscreen)
+endfunction
+
+command! -nargs=* -bang RG call RipgrepFzf(<q-args>, <bang>0)
+
+" Git grep
+command! -bang -nargs=* GGrep
+  \ call fzf#vim#grep(
+  \   'git grep --line-number '.shellescape(<q-args>), 0,
+  \   fzf#vim#with_preview({'dir': systemlist('git rev-parse --show-toplevel')[0]}), <bang>0)
 
 ">----| indentline {{{2
 let g:indentLine_char='┆'
@@ -86,13 +163,6 @@ let g:lightline = {
 autocmd! User GoyoEnter Limelight 0.8
 autocmd! User GoyoLeave Limelight!
 
-">----| bufferline {{{2
-let g:lightline_buffer_enable_devicons = 1
-let g:lightline_buffer_show_bufnr = 1
-let g:lightline_buffer_fname_mod = ':t'
-let g:lightline_buffer_separator_right_icon=''
-let g:lightline_buffer_separator_left_icon=''
-
 ">----| neomake {{{2
 " on changes in normal mode and when writing
 " to a buffer, after 500ms of delay
@@ -112,6 +182,14 @@ let g:neomake_warning_sign = {
     \   'texthl': 'WarningMsg',
     \ }
 
+">----| tag {{{2
+let g:gutentags_enabled=0
+
+">----| ultilsnips {{{2
+let g:UltiSnipsJumpForwardTrigger="<Tab>"
+let g:UltiSnipsJumpBackwardTrigger="<S-Tab>"
+let g:UltiSnipsExpandTrigger="<Tab>"
+
 ">----| vimtex {{{2
 " configure it to use Okular as the PDF viewer
 " let g:vimtex_view_general_viewer = 'okular'
@@ -125,8 +203,6 @@ call deoplete#custom#var('omni', 'input_patterns', {
 ">----| vim-sneak {{{2
 let g:sneak#label = 1
 
-">----| tag {{{2
-let g:gutentags_enabled=0
 """"""""""""""""""""""""""""""""""""""
 "               GENERAL {{{1
 """"""""""""""""""""""""""""""""""""""
@@ -195,6 +271,7 @@ let g:tex_conceal='admgs'
 " per file config
 au FileType tex,markdown set textwidth=68
 au BufReadPre init.vim,.zshrc set foldmethod=marker
+au BufNewFile,BufRead *.neomuttrc,*.muttrc setfiletype neomuttrc
 
 " set vertical split and fold characters
 set fillchars=vert:\ ,fold:-
@@ -245,23 +322,33 @@ nnoremap <silent>  <leader>tl :call <SID>ToggleList('location')<CR>
 nnoremap <silent>  <leader>tq :call <SID>ToggleList('quickfix')<CR>
 
 " cscope
-nnoremap <leader>fa :call CscopeFindInteractive(expand('<cword>'))<CR>
+nnoremap <leader>ca :call CscopeFindInteractive(expand('<cword>'))<CR>
 " s: Find this C symbol
-nnoremap  <leader>fs :call CscopeFind('s', expand('<cword>'))<CR>
+nnoremap  <leader>cs :call CscopeFind('s', expand('<cword>'))<CR>
 " g: Find this definition
-nnoremap  <leader>fg :call CscopeFind('g', expand('<cword>'))<CR>
+nnoremap  <leader>cg :call CscopeFind('g', expand('<cword>'))<CR>
 " d: Find functions called by this function
-nnoremap  <leader>fd :call CscopeFind('d', expand('<cword>'))<CR>
+nnoremap  <leader>cd :call CscopeFind('d', expand('<cword>'))<CR>
 " c: Find functions calling this function
-nnoremap  <leader>fc :call CscopeFind('c', expand('<cword>'))<CR>
+nnoremap  <leader>cc :call CscopeFind('c', expand('<cword>'))<CR>
 " t: Find this text string
-nnoremap  <leader>ft :call CscopeFind('t', expand('<cword>'))<CR>
+nnoremap  <leader>ct :call CscopeFind('t', expand('<cword>'))<CR>
 " e: Find this egrep pattern
-nnoremap  <leader>fe :call CscopeFind('e', expand('<cword>'))<CR>
+nnoremap  <leader>ce :call CscopeFind('e', expand('<cword>'))<CR>
 " f: Find this file
-nnoremap  <leader>ff :call CscopeFind('f', expand('<cword>'))<CR>
+nnoremap  <leader>cf :call CscopeFind('f', expand('<cword>'))<CR>
 " i: Find files #including this file
-nnoremap  <leader>fi :call CscopeFind('i', expand('<cword>'))<CR>
+nnoremap  <leader>ci :call CscopeFind('i', expand('<cword>'))<CR>
+
+" FZF
+nnoremap <leader>fb :Buffers<CR>
+nnoremap <leader>ff :Files<CR>
+nnoremap <leader>fg :Rg<CR>
+nnoremap <leader>fG :RG<CR>
+nnoremap <leader>fl :BLines<CR>
+nnoremap <leader>fL :Lines<CR>
+nnoremap <leader>fm :Marks<CR>
+nnoremap <leader>ft :Tags<CR>
 
 " del in insert mode
 inoremap <C-d> <Del>
