@@ -46,7 +46,7 @@ list() {
     dotfiles="${1//,/ }"
   else
     usage list
-    return 1
+    return 2
   fi
 
   # convert the space separated string 'dotfiles'
@@ -82,11 +82,11 @@ install() {
     case "${1}" in
       -h|--help )
         usage install
-        exit 1;;
+        exit 2;;
       -e|--exclude )
         if [ "${dotfiles}" ] || [ "${exclude}" ]; then
           usage install
-          exit 1
+          exit 2
         else
           exclude="${2//,/|}"
         fi
@@ -100,7 +100,7 @@ install() {
       * )
         if [ "${dotfiles}" ] || [ "${exclude}" ]; then
           usage install
-          exit 1
+          exit 2
         else
           dotfiles="${1//,/ }"
         fi
@@ -140,7 +140,7 @@ main() {
   case "${command}" in
     install ) install "${@:2}" ; ret="${?}";;
     list ) list "${@:2}" ; ret="${?}";;
-    * ) usage;;
+    * ) usage ; ret=2;;
   esac
 
   exit "${ret}"
