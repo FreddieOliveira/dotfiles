@@ -1,0 +1,109 @@
+###################################
+#         DEFAULT EMAIL           #
+###################################
+source ~/.config/neomutt/accounts/hotmail/account.config
+source ~/.config/neomutt/accounts/ufu/account.config
+
+
+###################################
+#           VARIABLES             #
+###################################
+set include
+set pager_stop
+set menu_scroll
+set use_envelope_from
+set edit_headers
+set fast_reply
+ignore *
+unignore date: from: to: cc: bcc: subject:
+unhdr_order *
+hdr_order date: from: to: cc: bcc: subject:
+auto_view text/html
+alternative_order text/plain text/enriched text/html *
+set mailcap_path         = "~/.config/neomutt/mailcap"
+set mail_check           = 120
+set timeout              = 300
+set imap_keepalive       = 300
+set move                 = no
+set auto_tag             = yes
+set pager_index_lines    = 10
+set menu_context         = 3
+
+# sort emails from newer to oldest
+set sort                 = 'threads'
+set sort_aux             = 'reverse-last-date-received'
+
+# sidebar
+set sidebar_visible      = yes
+set sidebar_width        = 23
+set sidebar_divider_char = '│'
+set sidebar_format       = '%B%?F? [%F]?%* %?N?%N/?%S'
+
+# status bar layout
+set status_format="$from/%f [Msgs:%?M?%M/?%m%?n? New:%n?%?o? Old:%o?%?F? Flag:%F?%?t? Tag:%t?%?d? Del:%d?]%>-(%P)---"
+
+
+###################################
+#          KEYBINDINGS            #
+###################################
+# Moving around
+bind attach,browser,index       g       noop
+bind attach,browser,index       gg      first-entry
+bind attach,browser,index       G       last-entry
+#bind        browser,index,pager N       search-opposite
+bind                      pager g       noop
+bind                      pager gg      top
+bind                      pager G       bottom
+bind                      pager k       previous-line
+bind                      pager j       next-line
+
+# Scrolling
+bind browser,pager,index,attach \CF     next-page
+bind browser,pager,index,attach \CB     previous-page # webview for URL
+bind browser,pager,index,attach \Cu     half-up
+bind browser,pager,index,attach \Cd     half-down
+bind browser,pager              \Ce     next-line
+bind browser,pager              \Cy     previous-line
+bind               index        \Ce     next-line
+bind               index        \Cy     previous-line
+
+# Misc
+bind index,pager                d       noop
+bind index,pager                u       noop
+bind index,pager                dd      delete-message
+bind index,pager                uu      undelete-message
+bind index,pager                <Space> sidebar-toggle-visible
+bind index                      <Up>    sidebar-prev
+bind index,pager                \Cp     sidebar-prev
+bind index                      <Down>  sidebar-next
+bind index,pager                \Cn     sidebar-next
+bind index,pager                \Co     sidebar-open
+bind index,pager                R       group-reply
+
+# Threads
+bind index,pager                dT      delete-thread
+bind index,pager                dt      delete-subthread
+bind index,pager                uT      undelete-thread
+bind index,pager                ut      undelete-subthread
+bind index,pager                gt      next-thread
+bind index,pager                gT      previous-thread
+bind index                      za      collapse-thread
+bind index                      zA      collapse-all # Missing :folddisable/foldenable
+
+
+# change between email accounts
+macro index 'A' '<sync-mailbox><enter-command>source ~/.config/neomutt/hotmail/account.config<enter><change-folder>!<enter>'
+macro index 'S' '<sync-mailbox><enter-command>source ~/.config/neomutt/ufu/account.config<enter><change-folder>!<enter>'
+macro compose K \
+"<enter-command>unset wait_key<enter>\
+<pipe-entry>pandoc -s -f gfm -t html5 --metadata pagetitle=' ' -o $TMPDIR/neomutt-alternative.html<enter>\
+<enter-command>set wait_key<enter>\
+<attach-file>$TMPDIR/neomutt-alternative.html<enter>\
+<tag-entry><previous-entry><tag-entry><group-alternatives>\
+<edit-description>^U<enter>"
+
+
+###################################
+#          COLORSCHEME            #
+###################################
+source ~/.config/neomutt/themes/monodracula.neomuttrc
