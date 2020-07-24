@@ -1,0 +1,73 @@
+###################################################################
+# MonoDracula Theme for Neomutt
+# Based on Dracula Theme by Paul Townsend <paul@caprica.org>
+# https://draculatheme.com/mutt and Monokai theme by Evan Widlosk
+# https://gist.github.com/Evidlo/e42222241c5f9a8f79a8ffd38a0acd2b
+# @author Freddie Oliveira <fredf_oliveira@ufu.br>
+###################################################################
+
+# general ----- foregnd ------ backgnd
+color error     color231       color212
+color indicator brightcolor231 color241
+color markers   color210       default
+color message   default        default
+color normal    default        color234
+color prompt    default        default
+color search    color84        default
+color status    color141       color237
+color tilde     color231       default
+color tree      color141       default
+
+# message index --- foregnd ------ backgnd --- pattern
+color index         color245       default     ".*"
+color index         brightcolor249 color237    "~U"
+color index         color210       default     "~D"
+color index         color84        default     "~F"
+color index         brightcolor117 color237    "~N"
+color index         color212       default     "~Q"
+color index         color215       default     "~T"
+color index         color141       default     "~v"
+color index_author  brightcolor118 color237    "~U"
+color index_author  color14        default     "~R"
+color index_date    color198       default
+color index_subject brightwhite    color237    "~U"
+color index_subject white          default     "~R"
+
+# message headers --- attr ---- foregnd ------ backgnd --- regex
+color header          underline brightcolor231 default     "^Subject:"
+color header                    brightcolor116 default     "^Date:"
+color header                    brightcolor156 default     "^From:"
+color header                    brightcolor216 default     "^To:"
+color header                    brightcolor229 default     "^Cc:"
+color hdrdefault                brightcolor218 default
+#set header_color_partial
+
+# message body --- attr ---- foregnd --- backgnd --- regex
+color attachment             color228    default
+color body                   color141    default     "[\-\.+_a-zA-Z0-9]+@[\-\.a-zA-Z0-9]+" # email addresses
+color body         underline color141    default     "(https?|ftp)://[+\-\.,/%~_:?&=\#a-zA-Z0-9]+" # URLs
+color body         bold      color231    default     "(^|[[:space:]])\\*[^[:space:]]+\\*([[:space:]]|$)" # *bold* text
+color body         underline color231    default     "(^|[[:space:]])_[^[:space:]]+_([[:space:]]|$)" # _underlined_ text
+color body                   color231    default     "(^|[[:space:]])/[^[:space:]]+/([[:space:]]|$)" # /italic/ text
+color quoted                 color208    default
+color quoted1                color117    default
+color quoted2                color84     default
+color quoted3                color215    default
+color quoted4                color212    default
+color signature              color212    default
+
+# sidebar ------------- foregnd ------ backgnd
+color sidebar_indicator brightcolor255 color98
+color sidebar_highlight brightdefault  color232
+color sidebar_divider   color141       default
+color sidebar_unread    brightcolor117 default
+#color sidebar_ordinary color226 default # WORKS
+# Color to give to the INBOX mailboxes
+#color sidebar_spoolfile color8 default
+# Color to give mailboxes containing flagged mail
+#color sidebar_flagged color9 black
+# Color to give mailboxes containing new mail
+#color sidebar_new color34 black
+
+# misc ------------- foregnd ------ backgnd
+color compose header brightcolor208 default
