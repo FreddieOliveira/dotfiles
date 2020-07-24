@@ -5,7 +5,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # export MANPATH="/usr/local/man:$MANPATH"
 export EDITOR='nvim'
 export TERM='tmux-256color'
-export FZF_DEFAULT_OPTS="--height=75% --tiebreak=begin --preview-window=down:80%:wrap:hidden --preview='preview.sh {}' --bind=space:toggle-preview --keep-right"
+export FZF_DEFAULT_OPTS="--height=75% --tiebreak=begin --preview-window=down:80%:wrap:hidden --cycle --preview='preview.sh {}' --bind=ctrl-space:toggle-preview --keep-right"
 #########################################################
 #              GLOBAL OH-MY-ZSH SETTINGS {{{1
 #########################################################
@@ -85,12 +85,12 @@ local realpath=\$(eval echo \${ctxt[IPREFIX]}\${ctxt[hpre]}\$in)
 zstyle ':fzf-tab:complete:*:*' extra-opts \
     --preview=$extract";preview.sh \$realpath"
 # prevent populating fzf query. See https://github.com/Aloxaf/fzf-tab/issues/99
-zstyle ':fzf-tab:*' query-string prefix first
+#zstyle ':fzf-tab:*' query-string prefix first
 ################################
 #>----| tmux {{{2
 ################################
 # autostart tmux server when starting the terminal
-ZSH_TMUX_AUTOSTART="true" 
+ZSH_TMUX_AUTOSTART="true"
 # don't close the terminal when killing tmux server
 ZSH_TMUX_AUTOQUIT="false"
 #########################################################
@@ -164,4 +164,7 @@ setopt extendedglob
 git config --global diff.tool vimdiff
 git config --global difftool.prompt false
 git config --global alias.d difftool
+
+# fzf-tab config that must be set at the end
+zstyle ':completion:*:descriptions' format '[%d]' # enable group support
 #########################################################
