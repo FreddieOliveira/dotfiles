@@ -1,0 +1,5 @@
+text/html; termux-open %s; nametemplate=%s.html
+text/x-csrc; preview.sh %s; nametemplate=%s.c
+image/*; termux-open %s; nametemplate=%s.html
+application/*; termux-open %s
+text/*; preview.sh %s; copiousoutput
