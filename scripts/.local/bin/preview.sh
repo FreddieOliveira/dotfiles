@@ -104,19 +104,17 @@ handle_file_extensions() {
             exec_or_fail mediainfo "${file_path}" && return 0
             exec_or_fail exiftool "${file_path}" && return 0
             ;;
-
-        ## unsupported extension
-        *)
-            if [ -d "${file_path}" ]; then
-                exec_or_fail head /dev/null && \
-                exec_or_fail tree -C ${file_path} \| head -100 && return 0
-            else
-                ls -alh "${file_path}"
-                echo ''
-                exec_or_fail file -L "${file_path}" && return 0
-            fi
-            ;;
     esac
+
+    ## unsupported extension
+    if [ -d "${file_path}" ]; then
+        exec_or_fail head /dev/null && \
+        exec_or_fail tree -C ${file_path} \| head -100 && return 0
+    else
+        ls -alh "${file_path}"
+        echo ''
+        exec_or_fail file -L "${file_path}" && return 0
+    fi
     # error
     return 1
 }
@@ -146,7 +144,7 @@ main() {
         # creates a symlink with proper extension if any
         if [[ ${file_extension} ]]; then
             [[ -z ${temp_dir} ]] && temp_dir=$(mktemp -d)
-            cp -s ${file_path} ${temp_dir}/file.${file_extension}
+            cp -s ${PWD}/${file_path} ${temp_dir}/file.${file_extension}
             file_path=${temp_dir}/file.${file_extension}
         fi
     fi
