@@ -37,6 +37,7 @@ handle_file_extensions() {
         rpm|rz|t7z|tar|tbz|tbz2|tgz|tlz|txz|tZ|tzo|war|xpi|xz|z|zip)
             exec_or_fail atool --list -- "${file_path}" && return 0
             exec_or_fail bsdtar --list --file "${file_path}" && return 0
+            exec_or_fail tar tvf "${file_path}" && return 0
             ;;
         rar)
             ## Avoid password prompt by providing empty password
