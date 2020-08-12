@@ -127,6 +127,11 @@ if [ -x /usr/bin/dircolors ]; then
     alias egrep='egrep --color=auto'
 fi
 
+# some more ls aliases
+alias ll='ls -alFh'
+alias la='ls -A'
+alias l='ls -CF'
+
 # clipboard copy and paste
 if ! which pbcopy >/dev/null; then
     if which xclip >/dev/null; then
@@ -147,13 +152,12 @@ fi
 
 alias lsblk='lsblk -o NAME,TYPE,FSTYPE,MOUNTPOINT,SIZE,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID,LABEL'
 
-# some more ls aliases
-alias ll='ls -alFh'
-alias la='ls -A'
-alias l='ls -CF'
-
 # make F1-F12 keys work inside htop
 alias htop='TERM=linux htop'
+
+# useful apt commands with fzf
+alias add="apt-cache search . | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {} 2>/dev/null; dpkg-query -L {} 2>&1 | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -r pkg install -y"
+alias del="dpkg-query --no-pager -W -f='\${binary:Package}\n' | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {} 2>/dev/null; dpkg-query -L {} | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -r apt purge -y"
 #########################################################
 #                   GENERAL CONFIGS {{{1
 #########################################################
