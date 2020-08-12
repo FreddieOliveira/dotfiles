@@ -145,7 +145,7 @@ main() {
         # creates a symlink with proper extension if any
         if [[ ${file_extension} ]]; then
             [[ -z ${temp_dir} ]] && temp_dir=$(mktemp -d)
-            cp -s ${PWD}/${file_path} ${temp_dir}/file.${file_extension}
+            cp -s $(realpath $file_path) ${temp_dir}/file.${file_extension}
             file_path=${temp_dir}/file.${file_extension}
         fi
     fi
