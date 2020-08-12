@@ -1,0 +1,1 @@
+/data/data/com.termux/files/home/.oh-my-zsh/custom/plugins/vi-mode/vi-mode.plugin.zsh
