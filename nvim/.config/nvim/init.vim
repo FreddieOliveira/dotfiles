@@ -22,6 +22,7 @@ Plug 'justinmk/vim-sneak'              " quick cursor jump around
 Plug 'ryanoasis/vim-devicons'          " file type icons
 Plug 'junegunn/fzf'                    " fzf integration
 Plug 'junegunn/fzf.vim'                " fzf integration
+Plug 'vimwiki/vimwiki'
 "Plug 'amix/vim-zenroom2'               " .md colorscheme when goyo is on
 "Plug 'iamcco/markdown-preview.nvim'    " web browser .md preview
 "Plug 'Valloric/YouCompleteMe'          " autocompletion
@@ -37,13 +38,13 @@ let g:lightline_buffer_fname_mod = ':t'
 let g:lightline_buffer_separator_right_icon=''
 let g:lightline_buffer_separator_left_icon=''
 
-">----| deoplete-clang {{{2
-let g:deoplete#sources#clang#libclang_path = '/data/data/com.termux/files/usr/lib/libclang.so'
-let g:deoplete#sources#clang#clang_header = '/data/data/com.termux/files/usr/lib/clang'
-
 ">----| deoplete {{{2
 " use deoplete
 let g:deoplete#enable_at_startup = 1
+
+">----| deoplete-clang {{{2
+let g:deoplete#sources#clang#libclang_path = '/data/data/com.termux/files/usr/lib/libclang.so'
+let g:deoplete#sources#clang#clang_header = '/data/data/com.termux/files/usr/lib/clang'
 
 ">----| fzf {{{2
 " This is the default extra key bindings
@@ -125,39 +126,39 @@ let g:indentLine_showFirstIndentLevel=1
 
 ">----| lightline {{{2
 let g:lightline = {
-    \   'active': {
-    \     'left': [['mode', 'paste'],
-    \              ['readonly', 'filename', 'modified'],
-    \              ['windowMaximized']]
-    \   },
-    \   'inactive': {
-    \     'left': [[], ['filename'], ['windowNumber']]
-    \   },
-    \   'tabline': {
-    \     'left': [['tabStatus'], ['bufferall']],
-    \     'right': [['close']]
-    \   },
-    \   'component_expand': {
-    \     'bufferall': 'lightline#buffer#bufferall',
-    \   },
-    \   'component_type': {
-    \     'bufferall': 'tabsel',
-    \   },
-    \   'component_function': {
-    \     'windowNumber': 'winnr',
-    \     'windowMaximized': 'IsMaximized',
-    \     'tabStatus': 'TabStatus',
-    \   },
-    \   'component_raw': {
-    \     'bufferall': 1
-    \   },
-    \   'separator': {
-    \     'left': "", 'right': ""
-    \   },
-    \   'subseparator': {
-    \     'left': "", 'right': ""
-    \   },
-    \ }
+  \   'active': {
+  \     'left': [['mode', 'paste'],
+  \              ['readonly', 'filename', 'modified'],
+  \              ['windowMaximized']]
+  \   },
+  \   'inactive': {
+  \     'left': [[], ['filename'], ['windowNumber']]
+  \   },
+  \   'tabline': {
+  \     'left': [['tabStatus'], ['bufferall']],
+  \     'right': [['close']]
+  \   },
+  \   'component_expand': {
+  \     'bufferall': 'lightline#buffer#bufferall',
+  \   },
+  \   'component_type': {
+  \     'bufferall': 'tabsel',
+  \   },
+  \   'component_function': {
+  \     'windowNumber': 'winnr',
+  \     'windowMaximized': 'IsMaximized',
+  \     'tabStatus': 'TabStatus',
+  \   },
+  \   'component_raw': {
+  \     'bufferall': 1
+  \   },
+  \   'separator': {
+  \     'left': "", 'right': ""
+  \   },
+  \   'subseparator': {
+  \     'left': "", 'right': ""
+  \   },
+  \ }
 
 ">----| limelight {{{2
 autocmd! User GoyoEnter Limelight 0.8
@@ -186,9 +187,9 @@ let g:neomake_warning_sign = {
 let g:gutentags_enabled=0
 
 ">----| ultilsnips {{{2
+let g:UltiSnipsExpandTrigger="<Tab>"
 let g:UltiSnipsJumpForwardTrigger="<Tab>"
 let g:UltiSnipsJumpBackwardTrigger="<S-Tab>"
-let g:UltiSnipsExpandTrigger="<Tab>"
 
 ">----| vimtex {{{2
 " configure it to use Okular as the PDF viewer
@@ -202,6 +203,19 @@ call deoplete#custom#var('omni', 'input_patterns', {
 
 ">----| vim-sneak {{{2
 let g:sneak#label = 1
+
+">----| vimwiki {{{2
+let g:vimwiki_list = [{
+  \ 'auto_export': 1,
+  \ 'custom_wiki2html': 'wiki2html.sh',
+  \ 'ext': '.md',
+  \ 'index': '_index',
+  \ 'path': '/sdcard/Documents/vimwiki/content',
+  \ 'path_html': '/sdcard/Documents/vimwiki/_site',
+  \ 'syntax': 'markdown',
+  \ 'template_ext': '.html',
+  \ 'template_path': '/sdcard/Documents/vimwiki/templates/',
+\}]
 
 """"""""""""""""""""""""""""""""""""""
 "               GENERAL {{{1
@@ -222,22 +236,25 @@ set colorcolumn=80
 set scrolloff=3
 
 " indent using 2 spaces
-set expandtab      " convert TAB into spaces
-set smarttab       " TAB respects 'tabstop', 'shiftwidth', and 'softtabstop'
-set tabstop=2      " number of visual spaces per TAB
-set softtabstop=2  " number of spaces in TAB when editing
-set shiftwidth=2   " number of spaces to use for indent and unindent
-set shiftround     " round indent to a multiple of 'shiftwidth'
+set expandtab     " convert TAB into spaces
+set smarttab      " TAB respects 'tabstop', 'shiftwidth', and 'softtabstop'
+set tabstop=2     " number of visual spaces per TAB
+set softtabstop=2 " number of spaces in TAB when editing
+set shiftwidth=2  " number of spaces to use for indent and unindent
+set shiftround    " round indent to a multiple of 'shiftwidth'
 
 " file type detection
+set nocompatible
 filetype indent on
+filetype plugin on
+syntax on
 
 " enable visual autocomplete for command menu
 set wildmenu
 
 " enhance searches
-set incsearch    " search as characters are typed
-set hlsearch     " highlight matches
+set incsearch " search as characters are typed
+set hlsearch  " highlight matches
 
 " set minimum window height and width
 " this is useful to allow vim-maximizer to maximize fullscreen
@@ -246,8 +263,8 @@ set wmw=0
 
 " folding code
 set foldenable
-set foldmethod=indent  " fold based on indent level
-set foldlevel=0        " starting fold depth
+set foldmethod=indent " fold based on indent level
+set foldlevel=0       " starting fold depth
 
 " open splits towards the bottom right corner
 set splitbelow
@@ -265,11 +282,15 @@ set nowarn
 " set all .tex files' filetype to latex
 let g:tex_flavor = "latex"
 
-" disable concealing for bold and intalic in .tex files
-let g:tex_conceal='admgs'
+" config concealing throught indentLine, since
+" it overrides vim conceal options
+let g:indentLine_concealcursor=""
+let g:indentLine_conceallevel=2
+" let g:tex_conceal='admgs'
 
 " per file config
-au FileType tex,markdown set textwidth=68
+au FileType tex,markdown,vimwiki set textwidth=68
+au FileType vimwiki UltiSnipsAddFiletypes markdown
 au BufReadPre init.vim,.zshrc set foldmethod=marker
 au BufNewFile,BufRead *.neomuttrc,*.muttrc setfiletype neomuttrc
 
@@ -393,7 +414,8 @@ function! IsMaximized()
     return ''
   endif
 endfunction
-
+" }}}
+">----| function MyFiletype() {{{
 function! MyFiletype()
   return winwidth(0) > 70 ? (strlen(&filetype) ? &filetype . ' ' . WebDevIconsGetFileTypeSymbol() : 'no ft') : ''
 endfunction
@@ -418,7 +440,7 @@ set termguicolors
 " dark variant
 set background=dark
 
-" this configuration option should be placed before `colorscheme gruvbox-material`
+" be sure to put this before 'colorscheme gruvbox-material'
 " available value: 'hard', 'medium'(default), 'soft'
 let g:gruvbox_material_background = 'medium'
 
