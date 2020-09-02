@@ -38,14 +38,11 @@ handle_file_extensions() {
             exec_or_fail atool --list -- "${file_path}" && return 0
             exec_or_fail bsdtar --list --file "${file_path}" && return 0
             exec_or_fail tar tvf "${file_path}" && return 0
+            exec_or_fail 7z l -p -- "${file_path}" && return 0
             ;;
         rar)
             ## Avoid password prompt by providing empty password
             exec_or_fail unrar lt -p- -- "${file_path}" && return 0
-            ;;
-        7z)
-            ## Avoid password prompt by providing empty password
-            exec_or_fail 7z l -p -- "${file_path}" && return 0
             ;;
 
         ## PDF
