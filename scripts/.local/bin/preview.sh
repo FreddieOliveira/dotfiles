@@ -21,7 +21,7 @@ handle_file_extensions() {
 
     case "${file_extension}" in
         ## Text
-        build|c|cpp|go|h|hpp|java|log|py|sh|txt)
+        build|c|cpp|go|h|hpp|java|log|md|py|sh|txt)
             exec_or_fail bat --style=numbers --color=always \
                 --line-range=:200 "${file_path}" && return 0
             ;;
@@ -33,7 +33,7 @@ handle_file_extensions() {
             ;;
 
         ## Archive
-        a|ace|alz|apk|arc|arj|bz|bz2|cab|cpio|deb|gz|jar|lha|lz|lzh|lzma|lzo|\
+        7z|a|ace|alz|apk|arc|arj|bz|bz2|cab|cpio|deb|gz|jar|lha|lz|lzh|lzma|lzo|\
         rpm|rz|t7z|tar|tbz|tbz2|tgz|tlz|txz|tZ|tzo|war|xpi|xz|z|zip)
             exec_or_fail atool --list -- "${file_path}" && return 0
             exec_or_fail bsdtar --list --file "${file_path}" && return 0
@@ -51,10 +51,10 @@ handle_file_extensions() {
         ## PDF
         pdf)
             ## Preview as text conversion
-            exec_or_fail pdftotext -l 10 -nopgbrk -q -- "${file_path}" - | \
-              fmt -w "${PV_WIDTH}" && return 0
-            exec_or_fail mutool draw -F txt -i -- "${file_path}" 1-10 | \
-              fmt -w "${PV_WIDTH}" && return 0
+            exec_or_fail pdftotext -l 10 -nopgbrk -q -- "${file_path}" - \| \
+              fmt -w "$((${COLUMNS} - 3))" \| head -100 && return 0
+            exec_or_fail mutool draw -F txt -i -- "${file_path}" 1-10 \| \
+              fmt -w "$((${COLUMNS} - 3))" \| head -100 && return 0
             exec_or_fail exiftool "${file_path}" && return 0
             ;;
 
@@ -109,7 +109,6 @@ handle_file_extensions() {
 
     ## unsupported extension
     if [ -d "${file_path}" ]; then
-        exec_or_fail head /dev/null && \
         exec_or_fail tree -C ${file_path} \| head -100 && return 0
     else
         ls -alh "${file_path}"
