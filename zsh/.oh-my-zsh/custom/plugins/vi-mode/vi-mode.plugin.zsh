@@ -73,7 +73,10 @@ function yank-hack() {
 # exec fix_cursor function every time before drawing the prompt
 precmd_functions+=(fix_cursor)
 
-# Enable surround text-objects (quotes, brackets)
+# enable surround widget
+autoload -Uz surround
+
+# enable selection of surrounded text for surround zle widget
 autoload -U select-bracketed
 zle -N select-bracketed
 for m in visual vicmd; do
@@ -90,23 +93,32 @@ for m in visual vicmd; do
   done
 done
 
+# enable edition/deletion of surrounded text
+# edit: cs<before><after>
+# deletion: ds<symbol>
+zle -N delete-surround surround
+zle -N change-surround surround
+bindkey -M vicmd 'Tcs' change-surround
+bindkey -M vicmd 'Tds' delete-surround
+
+# enable addition of surroundings to a text
+# normal mode: ys<movement><symbol>
+# visual mode: ys<symbol>
+zle -N add-surround surround
+bindkey -M vicmd 'Tys' add-surround
+bindkey -M visual S add-surround
+
+# these hacks are needed because of time conflicts between
+# low KEYTIMEOUT values and 's' shortcut used for the surroundings
 zle -N change-hack
 zle -N delete-hack
 zle -N yank-hack
-autoload -Uz surround
-zle -N delete-surround surround
-zle -N change-surround surround
-zle -N add-surround surround
-bindkey -M vicmd 'Tcs' change-surround
-bindkey -M vicmd 'Tds' delete-surround
-bindkey -M vicmd 'Tys' add-surround
-bindkey -M vicmd 'Tvd' vi-delete
-bindkey -M vicmd 'Tvc' vi-change
-bindkey -M vicmd 'Tvy' vi-yank
 bindkey -M vicmd 'c' change-hack
 bindkey -M vicmd 'd' delete-hack
 bindkey -M vicmd 'y' yank-hack
-bindkey -M visual S add-surround
+bindkey -M vicmd 'Tvd' vi-delete
+bindkey -M vicmd 'Tvc' vi-change
+bindkey -M vicmd 'Tvy' vi-yank
 
 # register the widgets
 zle -N single_replace
