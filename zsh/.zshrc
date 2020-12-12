@@ -5,6 +5,8 @@ export ZSH="$HOME/.oh-my-zsh"
 # export MANPATH="/usr/local/man:$MANPATH"
 export EDITOR='nvim'
 export TERM='tmux-256color'
+# export LC_ALL='pt_BR.UTF-8'
+# export LANG='pt_BR.UTF-8'
 export FZF_DEFAULT_OPTS="--height=75% --tiebreak=begin --preview-window=down:80%:wrap:hidden --cycle --preview='preview.sh {}' --bind=ctrl-space:toggle-preview --keep-right"
 #########################################################
 #              GLOBAL OH-MY-ZSH SETTINGS {{{1
@@ -156,8 +158,8 @@ alias lsblk='lsblk -o NAME,TYPE,FSTYPE,MOUNTPOINT,SIZE,FSSIZE,FSUSED,FSAVAIL,FSU
 alias htop='TERM=linux htop'
 
 # useful apt commands with fzf
-alias add="apt-cache search . | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {} 2>/dev/null; dpkg-query -L {} 2>&1 | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -r pkg install -y"
-alias del="dpkg-query --no-pager -W -f='\${binary:Package}\n' | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {} 2>/dev/null; dpkg-query -L {} | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -r apt purge -y"
+alias add="apt-cache search . | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {} 2>/dev/null; dpkg-query -L {} 2>&1 | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev/* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -ro pkg install"
+alias del="dpkg-query --no-pager -W -f='\${binary:Package}\n' | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {} 2>/dev/null; dpkg-query -L {} | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev/* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -ro apt purge"
 #########################################################
 #                   GENERAL CONFIGS {{{1
 #########################################################
