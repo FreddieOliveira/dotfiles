@@ -2,42 +2,35 @@
 """"""""""""""""""""""""""""""""""""""
 call plug#begin('~/.local/share/nvim/plugged')
 
-Plug 'deoplete-plugins/deoplete-clang' " deoplete provider for C/C++
-Plug 'Shougo/deoplete.nvim'            " autocompletion framework
-Plug 'junegunn/goyo.vim'               " distraction free mode
-Plug 'sainnhe/gruvbox-material'        " colorscheme
-Plug 'Yggdroot/indentLine'             " draw indent guides (not so good)
-Plug 'itchyny/lightline.vim'           " status bar
-Plug 'taohexxx/lightline-buffer'       " lightline top bar plugin
-Plug 'junegunn/limelight.vim'          " text color dimmer (used with goyo)
-Plug 'neomake/neomake'                 " code linting
-Plug 'SirVer/ultisnips'                " snippets framework
-Plug 'ludovicchabant/vim-gutentags'    " ctags auto generator
-Plug 'skywind3000/gutentags_plus'      " cscope useful shortcuts
-Plug 'szw/vim-maximizer'               " tmux C-z
-Plug 'terryma/vim-multiple-cursors'    " sublime like multi cursors
-Plug 'honza/vim-snippets'              " ultisnips provider
-Plug 'lervag/vimtex'                   " LaTeX integration
-Plug 'justinmk/vim-sneak'              " quick cursor jump around
-Plug 'ryanoasis/vim-devicons'          " file type icons
-Plug 'junegunn/fzf'                    " fzf integration
-Plug 'junegunn/fzf.vim'                " fzf integration
+Plug 'Shougo/deoplete.nvim'              " autocompletion framework
+Plug 'deoplete-plugins/deoplete-clang'   " deoplete provider for C/C++
+Plug 'junegunn/goyo.vim'                 " distraction free mode
+Plug 'sainnhe/gruvbox-material'          " colorscheme
+Plug 'Yggdroot/indentLine'               " draw indent guides (not so good)
+Plug 'itchyny/lightline.vim'             " status bar
+Plug 'mengelbrecht/lightline-bufferline' " lightline top bar plugin
+Plug 'junegunn/limelight.vim'            " text color dimmer (used with goyo)
+Plug 'neomake/neomake'                   " code linting
+Plug 'SirVer/ultisnips'                  " snippets framework
+Plug 'honza/vim-snippets'                " ultisnips provider
+Plug 'ludovicchabant/vim-gutentags'      " ctags auto generator
+Plug 'skywind3000/gutentags_plus'        " cscope useful shortcuts
+Plug 'szw/vim-maximizer'                 " tmux C-z
+Plug 'terryma/vim-multiple-cursors'      " sublime like multi cursors
+Plug 'lervag/vimtex'                     " LaTeX integration
+Plug 'justinmk/vim-sneak'                " quick cursor jump around
+Plug 'ryanoasis/vim-devicons'            " file type icons
+Plug 'junegunn/fzf'                      " fzf integration
+Plug 'junegunn/fzf.vim'                  " fzf integration
 Plug 'vimwiki/vimwiki'
-"Plug 'amix/vim-zenroom2'               " .md colorscheme when goyo is on
-"Plug 'iamcco/markdown-preview.nvim'    " web browser .md preview
-"Plug 'Valloric/YouCompleteMe'          " autocompletion
+"Plug 'amix/vim-zenroom2'                 " .md colorscheme when goyo is on
+"Plug 'iamcco/markdown-preview.nvim'      " web browser .md preview
+"Plug 'Valloric/YouCompleteMe'            " autocompletion
 
 call plug#end()
 """"""""""""""""""""""""""""""""""""""
 "           PLUGINS CONFIG {{{1
 """"""""""""""""""""""""""""""""""""""
-">----| bufferline {{{2
-let g:lightline_buffer_enable_devicons = 1
-let g:lightline_buffer_show_bufnr = 1
-let g:lightline_buffer_fname_mod = ':t'
-let g:lightline_buffer_separator_right_icon=''
-let g:lightline_buffer_separator_left_icon=''
-
 ">----| deoplete {{{2
 " use deoplete
 let g:deoplete#enable_at_startup = 1
@@ -124,6 +117,11 @@ let g:indentLine_char='┆'
 let g:indentLine_first_char='┆'
 let g:indentLine_showFirstIndentLevel=1
 
+">----| lightline-bufferline {{{2
+let g:lightline#bufferline#show_number=1
+let g:lightline#bufferline#clickable=1
+let g:lightline#bufferline#enable_devicons=1
+
 ">----| lightline {{{2
 let g:lightline = {
   \   'active': {
@@ -135,14 +133,14 @@ let g:lightline = {
   \     'left': [[], ['filename'], ['windowNumber']]
   \   },
   \   'tabline': {
-  \     'left': [['tabStatus'], ['bufferall']],
+  \     'left': [['tabStatus'], ['buffers']],
   \     'right': [['close']]
   \   },
   \   'component_expand': {
-  \     'bufferall': 'lightline#buffer#bufferall',
+  \     'buffers': 'lightline#bufferline#buffers',
   \   },
   \   'component_type': {
-  \     'bufferall': 'tabsel',
+  \     'buffers': 'tabsel'
   \   },
   \   'component_function': {
   \     'windowNumber': 'winnr',
@@ -150,7 +148,7 @@ let g:lightline = {
   \     'tabStatus': 'TabStatus',
   \   },
   \   'component_raw': {
-  \     'bufferall': 1
+  \     'buffers': 1
   \   },
   \   'separator': {
   \     'left': "", 'right': ""
@@ -216,7 +214,6 @@ let g:vimwiki_list = [{
   \ 'template_ext': '.html',
   \ 'template_path': '/sdcard/Documents/vimwiki/templates/',
 \}]
-
 """"""""""""""""""""""""""""""""""""""
 "               GENERAL {{{1
 """"""""""""""""""""""""""""""""""""""
