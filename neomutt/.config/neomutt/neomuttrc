@@ -1,6 +1,7 @@
 ###################################
 #         DEFAULT EMAIL           #
 ###################################
+#source ~/.config/neomutt/accounts/gmail/account.config
 source ~/.config/neomutt/accounts/hotmail/account.config
 source ~/.config/neomutt/accounts/ufu/account.config
 
@@ -37,7 +38,7 @@ set sort_aux             = 'reverse-last-date-received'
 set sidebar_visible      = yes
 set sidebar_width        = 23
 set sidebar_divider_char = '│'
-set sidebar_format       = '%B%?F? [%F]?%* %?N?%N/?%S'
+set sidebar_format       = '%D%?F? [%F]?%* %?N?%N/?%S'
 
 # status bar layout
 set status_format="$from/%f [Msgs:%?M?%M/?%m%?n? New:%n?%?o? Old:%o?%?F? Flag:%F?%?t? Tag:%t?%?d? Del:%d?]%>-(%P)---"
