@@ -441,5 +441,10 @@ set background=dark
 " available value: 'hard', 'medium'(default), 'soft'
 let g:gruvbox_material_background = 'medium'
 
+" custom highlight when using git difftool
 colorscheme gruvbox-material
+hi DiffAdd      gui=none    guifg=#ccffcc       guibg=#6aa966
+hi DiffChange   gui=none    guifg=#ffffff       guibg=#404040
+hi DiffDelete   gui=bold    guifg=#ffcccc       guibg=#d06480
+hi DiffText     gui=none    guifg=#ffffcc       guibg=#e08070
 """"""""""""""""""""""""""""""""""""""
