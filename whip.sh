@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 
 function is_selected() {
-  local pkg_name
-  local file_name
-
-  pkg_name=$1
-  file_name=$2
+  local pkg_name=$1
+  local file_name=$2
 
   if grep -qs "^${pkg_name}$" $file_name; then
     echo ON
@@ -15,16 +12,14 @@ function is_selected() {
 }
 
 function is_dotfile_selected() {
-  local pkg_name
+  local pkg_name=$1
 
-  pkg_name=$1
   is_selected $pkg_name dotfiles.txt
 }
 
 function is_pkg_selected() {
-  local pkg_name
+  local pkg_name=$1
 
-  pkg_name=$1
   is_selected $pkg_name packages.txt
 }
 
@@ -44,18 +39,6 @@ DOTFILES=('neomutt' 'Basic initial setup' $(is_dotfile_selected neomutt)
           'tmux' 'Cool dotfile' $(is_dotfile_selected tmux)
           'zsh' 'Oh My Zsh' $(is_dotfile_selected zsh))
 
-MAIN_MENU=('1. Install packages' 'Only install packages.'
-           '2. Install dotfiles' 'Only install the dotfiles.'
-           '3. Setup packages' 'Install plugins for the packages.')
-
-function main_menu() {
-    #"<-- Back" "Return to the main menu." \
-  (whiptail --title " Main menu " --menu \
-     "Choose an option" 25 78 16 \
-     "${MAIN_MENU[@]}" \
-     3>&1 1>&2 2>&3 3>&-)
-}
-
 function install_packages() {
   local packages
 
@@ -63,37 +46,61 @@ function install_packages() {
   # line separeted strings return as an array into packages
   packages=($(whiptail --title ' Software selection ' \
     --separate-output --cancel-button 'Skip' \
-    --checklist "Choose user's permissions" \
+    --checklist "Choose packages to be installed'" \
     20 50 $(( ${#PACKAGES[@]} / 3 )) \
     "${PACKAGES[@]}" \
     3>&1 1>&2 2>&3 3>&-))
 
-  return 1
+  (( $? != 0 || ${#packages[@]} == 0 )) && return $?
 
   # apt-get update 
+  (printf "XXX\n%d\n%s\nXXX\n" "0" "Updating mirrors..."
+   apt-get update -y -o APT::Status-Fd=2 2>&1 1>/dev/null \
+     | while read line; do
+         local regex apt_progress last_progress
 
-  (for i in {0..$(( ${#packages[@]} - 1 ))}; do
-    (( i > 0 )) && sleep 0.8
-    printf "%d\nXXX\n%s\nXXX\n" \
-      "$(( (i * 10000) / (${#packages[@]} * 100) ))" \
-      "Installing ${packages[i]}..."
-    apt-get install -y -o APT::Status-Fd=2 ${packages[i]} 2>&1 1>&- \
+         regex="file ([0-9]+) of ([0-9]+)"
+
+         if [[ $line =~ $regex ]]; then
+	   apt_progress="$(( ((${BASH_REMATCH[1]} - 1) * 100) / ${BASH_REMATCH[2]} ))"
+           (( apt_progress < last_progress )) && apt_progress=$last_progress
+           last_progress=$apt_progress
+           printf "XXX\n%d\n%s\nXXX\n" $apt_progress "Updating mirrors..."
+         fi
+       done) \
+  | whiptail --title " Software installation " \
+             --gauge "Please wait while updating" \
+             6 60 0
+
+  # apt-get install
+  (for (( i = 0; i < ${#packages[@]}; i++ )); do
+    (( i > 0 )) && sleep 0.3
+    printf "XXX\n%d\n%s\nXXX\n" \
+      "$(( (i * 100) / ${#packages[@]} ))" \
+      "Downloading ${packages[i]}..."
+    apt-get install -y -o APT::Status-Fd=2 ${packages[i]} 2>&1 1>/dev/null \
       | while read line; do
-          local apt_progress
-          local regex
+          local regex_1 regex_2 apt_progress
 
-          regex="pmstatus:.+:([0-9]{1,3})\."
+          regex_1="dlstatus:.+:([0-9]{1,3})\."
+          regex_2="pmstatus:.+:([0-9]{1,3})\."
 
-          if [[ ${line} =~ ${regex} ]]; then
+          if [[ $line =~ $regex_1 ]]; then
             apt_progress="$(( ${BASH_REMATCH[1]} / ${#packages[@]} ))"
-            printf "%d\nXXX\n%s\nXXX\n" \
-              "$(( (i * 10000) / (${#packages[@]} * 100) + apt_progress ))" \
+            printf "XXX\n%d\n%s\nXXX\n" \
+              "$(( (i * 100) / ${#packages[@]} + apt_progress / 2 ))" \
+              "Downloading ${packages[i]}..."
+          elif [[ $line =~ $regex_2 ]]; then
+            apt_progress="$(( ${BASH_REMATCH[1]} / ${#packages[@]} ))"
+            printf "XXX\n%d\n%s\nXXX\n" \
+              "$(( (i * 100 + 50) / ${#packages[@]} + apt_progress / 2 ))" \
               "Installing ${packages[i]}..."
           fi
         done
-    printf "%d\nXXX\n%s\nXXX\n" \
-      "$(( ((i + 1) * 10000) / (${#packages[@]} * 100) ))" \
+    printf "XXX\n%d\n%s\nXXX\n" \
+      "$(( ((i + 1) * 100) / ${#packages[@]} ))" \
       "Installing ${packages[i]}... Done"
+    sleep 0.4
   done) \
     | whiptail --title " Software installation " \
                --gauge "Please wait while installing" \
@@ -101,16 +108,22 @@ function install_packages() {
 }
 
 function install_dotfiles() {
-  local packages
+  local packages_aux packages
 
   # swap stdout and stderr from whiptail process and save its
   # line separeted strings return as an array into packages
-  packages=$(whiptail --title ' Software configuration ' \
+  packages_aux=$(whiptail --title ' Software configuration ' \
     --separate-output --cancel-button 'Skip' \
-    --checklist "Choose user's permissions" \
+    --checklist "Install dotfiles for selected packages" \
     20 50 $(( ${#DOTFILES[@]} / 3 )) \
     "${DOTFILES[@]}" \
     3>&1 1>&2 2>&3 3>&-)
+
+  (( $? != 0 )) || [[ $packages_aux == '' ]] && return $?
+
+  for pkg in $packages_aux; do
+    packages=$pkg,$packages
+  done
 
   install $packages
 }
@@ -122,12 +135,14 @@ function setup_packages() {
   # line separeted strings return as an array into packages
   packages=($(whiptail --title ' Software configuration ' \
     --separate-output --cancel-button 'Skip' \
-    --checklist "Choose user's permissions" \
+    --checklist "Install plugins for selected packages" \
     20 50 $(( ${#DOTFILES[@]} / 3 )) \
     "${DOTFILES[@]}" \
     3>&1 1>&2 2>&3 3>&-))
 
-  for i in {0..$(( ${#packages[@]} - 1 ))}; do
+  (( $? != 0 || ${#packages[@]} == 0 )) && return $?
+
+  for (( i = 0; i < ${#packages[@]}; i++ )); do
     case $package in
       neomutt )
         ;;
@@ -143,21 +158,9 @@ function setup_packages() {
   done
 }
 
-function main() {
-  local func
-
-  func=main_menu  # initial function name
-
-  while func=$($func); do
-    func=${func#*. }   # delete the option number 
-    func=${func,,}     # tolower
-    func=${func// /_}  # substitute spaces for underscore
-  done
-
+function setup_wizard() {
+  install_packages
+  install_dotfiles
+  setup_packages
   return 0
 }
-
-cd "${BASH_SOURCE[0]%/*}"
-. install.sh
-main "$@"
-
