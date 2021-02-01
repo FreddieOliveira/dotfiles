@@ -2,10 +2,10 @@
 #########################################################
 export DISPLAY=:1
 export EDITOR='nvim'
+export PATH="$HOME/.local/bin:$PATH"
 export TERM='tmux-256color'
 export ZSH="$HOME/.oh-my-zsh"
 export FZF_DEFAULT_OPTS="--height=75% --tiebreak=begin --preview-window=down:80%:wrap:hidden --cycle --preview='preview.sh {}' --bind=ctrl-space:toggle-preview --keep-right"
-# export PATH="$HOME/.local/bin:$PATH"
 # export MANPATH="/usr/local/man:$MANPATH"
 # export LC_ALL='pt_BR.UTF-8'
 # export LANG='pt_BR.UTF-8'
