@@ -6,6 +6,7 @@ usage() {
   case "${usage_type}" in
     install ) install_usage;;
     list ) list_usage;;
+    tui ) tui_usage;;
     * ) general_usage;;
   esac
 }
@@ -16,23 +17,27 @@ general_usage() {
   printf "\nCommands:\n"
   printf "    install\tInstall specified dotfiles\n"
   printf "    list\tList available dotfiles and its files\n"
+  printf "    tui\t\tStart setup wizard ncurse based TUI\n"
   printf "\nRun '%s <command> -h' for more information on a command.\n" \
     "${0##*/}"
 }
 
 install_usage() {
-  printf "Usage:\t%s install [<dotfile,...> | -e <dotfile,...>] [-s]\n" \
-    "${0##*/}"
-  printf "\nInstall specified dotfiles. If no dotfiles are specified, then install\nall of them. It is an error to specify the dotfiles and use the '-e'\nargument simultaneously\n"
+  printf "Usage:\t%s install [-es] <dotfile,...>\n" "${0##*/}"
+  printf "\nInstall specified dotfiles by comma separated list. If no dotfiles\nare specified, then install all of them. Alternatively, install all\ndotfiles, but the specified ones.\n"
   printf "\nArguments:\n"
-  printf "  -e, --exclude <dotfile,...>\tInstall all dotfiles, exept the comma separated\n\t\t\t\tlisted ones\n"
-  printf "  -s, --symlink\t\t\tInstall the dotfiles as symlinks instead of\n\t\t\t\tcopying them. This is useful to keep using this\n\t\t\t\tfolder to manage your dotfiles with git\n"
+  printf "  -e, --exclude <dotfile,...>\tInstall all dotfiles, exept the comma\n\t\t\t\tseparated listed ones\n"
+  printf "  -s, --symlink\t\t\tInstall the dotfiles as symlinks instead of\n\t\t\t\tcopying them. This is useful to keep using\n\t\t\t\tthis folder to manage your dotfiles with git\n"
 }
 
 list_usage() {
-  printf "Usage:\t%s list [<dotfile,...>]\n" \
-    "${0##*/}"
-  printf "\nList available dotfiles and its files. If no dotfiles are specified,\nthen list all of them\n"
+  printf "Usage:\t%s list [<dotfile,...>]\n" "${0##*/}"
+  printf "\nList available dotfiles and its files. It's possible to specify dotfiles\nseparated by comma. If no dotfiles are specified, then list all of them.\n"
+}
+
+tui_usage() {
+  printf "Usage:\t%s tui\n" "${0##*/}"
+  printf "\nStart setup wizard using a ncurse based text user interface.\nIt's necessary to have dialog or whiptail installed.\n"
 }
 
 list() {
@@ -65,7 +70,7 @@ list() {
       printf "\n"
       ret=0
     elif [ ! -e "${dir}" ]; then
-      printf "%s\n\n" "Inexistent dotfile ${dir}"
+      printf "%s\n" "Inexistent dotfile ${dir}"
     fi
   done
 
@@ -126,11 +131,34 @@ install() {
       # if we installed at least one dotfile, return success
       ret=0
     elif [ ! -e "${dir}" ]; then
-      printf "%s\n\n" "Inexistent dotfile ${dir}"
+      printf "%s\n" "Inexistent dotfile ${dir}"
     fi
   done
 
   return "${ret}"
+}
+
+tui() {
+  local ret
+
+  # parse the positional parameters
+  if (( "${#}" != 0 )); then
+    usage tui
+    return 2
+  fi
+
+  if command -v dialog >/dev/null 2>&1; then
+    . dial.sh
+    ret=$(setup_wizard)
+  elif command -v whiptail >/dev/null 2>&1; then
+    . whip.sh
+    ret=$(setup_wizard)
+  else
+    usage tui
+    ret=1
+  fi
+
+  return $ret
 }
 
 main() {
@@ -140,6 +168,7 @@ main() {
   case "${command}" in
     install ) install "${@:2}" ; ret="${?}";;
     list ) list "${@:2}" ; ret="${?}";;
+    tui ) tui "${@:2}" ; ret="${?}";;
     * ) usage ; ret=2;;
   esac
 
