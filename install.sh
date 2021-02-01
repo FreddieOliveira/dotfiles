@@ -139,26 +139,24 @@ install() {
 }
 
 tui() {
-  local ret
-
   # parse the positional parameters
   if (( "${#}" != 0 )); then
     usage tui
     return 2
   fi
 
-  if command -v dialog >/dev/null 2>&1; then
-    . dial.sh
-    ret=$(setup_wizard)
-  elif command -v whiptail >/dev/null 2>&1; then
+#  if command -v dialog >/dev/null 2>&1; then
+#    . dial.sh
+  if command -v whiptail >/dev/null 2>&1; then
     . whip.sh
-    ret=$(setup_wizard)
   else
     usage tui
-    ret=1
+    return 1
   fi
 
-  return $ret
+  setup_wizard
+
+  return $?
 }
 
 main() {
