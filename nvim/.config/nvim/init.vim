@@ -204,16 +204,16 @@ let g:sneak#label = 1
 
 ">----| vimwiki {{{2
 let g:vimwiki_list = [{
-  \ 'auto_export': 1,
-  \ 'custom_wiki2html': 'wiki2html.sh',
+  \ 'syntax': 'markdown',
   \ 'ext': '.md',
   \ 'index': '_index',
   \ 'path': '/sdcard/Documents/vimwiki/content',
   \ 'path_html': '/sdcard/Documents/vimwiki/_site',
-  \ 'syntax': 'markdown',
   \ 'template_ext': '.html',
   \ 'template_path': '/sdcard/Documents/vimwiki/templates/',
 \}]
+  "\ 'auto_export': 1,
+  "\ 'custom_wiki2html': 'wiki2html.sh',
 """"""""""""""""""""""""""""""""""""""
 "               GENERAL {{{1
 """"""""""""""""""""""""""""""""""""""
