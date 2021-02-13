@@ -35,6 +35,17 @@ function fix_cursor() {
 }
 
 function change-hack() {
+  local active=${REGION_ACTIVE:-0}
+
+  # put cursor in underscore shape
+  printf '\033[4 q'
+
+  # if on visual mode simply change selection
+  if (( $active == 1 || $active == 2 )); then
+    zle vi-change
+    return
+  fi
+
   read -k 1 option
 
   if [[ $option == 's' ]]; then
@@ -44,9 +55,21 @@ function change-hack() {
   else
     zle -U ${NUMERIC}Tvc$option
   fi
+
+  # change cursor shape accordingly
+  # i.e. cc goes to insert mode, while cESC goes to normal mode
+  zle-keymap-select
 }
 
 function delete-hack() {
+  local active=${REGION_ACTIVE:-0}
+
+  # if on visual mode simply delete selection
+  if (( $active == 1 || $active == 2 )); then
+    zle vi-delete
+    return
+  fi
+
   read -k 1 option
 
   if [[ $option == 's' ]]; then
@@ -59,6 +82,14 @@ function delete-hack() {
 }
 
 function yank-hack() {
+  local active=${REGION_ACTIVE:-0}
+
+  # if on visual mode simply yank selection
+  if (( $active == 1 || $active == 2 )); then
+    zle vi-yank
+    return
+  fi
+
   read -k 1 option
 
   if [[ $option == 's' ]]; then
