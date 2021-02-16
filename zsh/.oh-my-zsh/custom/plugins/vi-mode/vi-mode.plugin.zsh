@@ -125,11 +125,143 @@ function vim_sneak_backward() {
   return 1
 }
 
+# overwrite builtin select-quoted, patching it to work on multiple lines
+select-quoted () {
+  setopt localoptions noksharrays
+  local matching=${${1:-$KEYS}[2]}
+  local -i start=CURSOR+2 end=CURSOR+2 found=0 alt=0 count=0
+  if (( REGION_ACTIVE ))
+  then
+    if (( MARK < CURSOR ))
+    then
+      start=MARK+2
+    else
+      end=MARK+2
+    fi
+  fi
+  [[ $BUFFER[CURSOR+1] = $matching && $BUFFER[CURSOR] != \\ ]] && count=1
+  while (( (count || ! alt) && --start ))
+  do
+    if [[ $BUFFER[start] = "$matching" ]]
+    then
+      if [[ $BUFFER[start-1] = \\ ]]
+      then
+        (( start-- ))
+      elif (( ! found ))
+      then
+        found=start
+      else
+        (( ! alt )) && alt=start
+        (( count && ++count ))
+      fi
+    fi
+  done
+  for ((start=CURSOR+2; ! found && start+1 < $#BUFFER; start++ )) do
+    case $BUFFER[start] in
+      ($'\n') return 1 ;;
+      (\\) (( start++ )) ;;
+      ("$matching") (( end=start+1, found=start )) ;;
+    esac
+  done
+  [[ $BUFFER[end-1] = \\ ]] && (( end++ ))
+  until [[ $BUFFER[end] == "$matching" ]]
+  do
+    [[ $BUFFER[end] = \\ ]] && (( end++ ))
+    if (( ++end > $#BUFFER ))
+    then
+      end=0
+      break
+    fi
+  done
+  if (( alt && (!end || count == 2) ))
+  then
+    end=found
+    found=alt
+  fi
+  (( end )) || return 1
+  [[ ${${1:-$KEYS}[1]} = a ]] && (( found-- )) || (( end-- ))
+  (( REGION_ACTIVE = !!REGION_ACTIVE ))
+  [[ $KEYMAP = vicmd ]] && (( REGION_ACTIVE && end-- ))
+  MARK=found
+  CURSOR=end
+}
+
+# overwrite builtin surround, patching it to not insert space around
+# brackets and to keep the cursor position after the operations
+surround () {
+  setopt localoptions noksharrays
+  autoload -Uz select-quoted select-bracketed
+  local before after
+  local -A matching
+  matching=(\( \) \{ \} \< \> \[ \])
+  zle -f vichange
+  case $WIDGET in
+    (change-*) local MARK="$MARK" save_cur=CURSOR="$CURSOR" call
+      read -k 1 before
+      if [[ ${(kvj::)matching} = *$before* ]]
+      then
+        call=select-bracketed
+      else
+        call=select-quoted
+      fi
+      read -k 1 after
+      $call "a$before" || return 1
+      before="$after"
+      if [[ -n $matching[$before] ]]
+      then
+        after="$matching[$before]"
+      elif [[ -n $matching[(r)[$before:q]] ]]
+      then
+        before="${(k)matching[(r)[$before:q]]}"
+      fi
+      BUFFER[CURSOR]="$after"
+      BUFFER[MARK+1]="$before"
+      CURSOR=$save_cur  ;;
+    (delete-*) local MARK="$MARK" save_cur=CURSOR="$CURSOR" call
+      read -k 1 before
+      if [[ ${(kvj::)matching} = *$before* ]]
+      then
+        call=select-bracketed
+      else
+        call=select-quoted
+      fi
+      if $call "a$before"
+      then
+        BUFFER[CURSOR]=''
+        BUFFER[MARK+1]=''
+        CURSOR=$save_cur
+      fi ;;
+    (add-*) local save_cut="$CUTBUFFER"
+      zle .vi-change || return
+      local save_cur="$CURSOR"
+      zle .vi-cmd-mode
+      read -k 1 before
+      after="$before"
+      if [[ -n $matching[$before] ]]
+      then
+        after=" $matching[$before]"
+        before+=' '
+      elif [[ -n $matching[(r)[$before:q]] ]]
+      then
+        before="${(k)matching[(r)[$before:q]]}"
+      fi
+      CUTBUFFER="$before$CUTBUFFER$after"
+      if [[ CURSOR -eq 0 || $BUFFER[CURSOR] = $'\n' ]]
+      then
+        zle .vi-put-before -n 1
+      else
+        zle .vi-put-after -n 1
+      fi
+      CUTBUFFER="$save_cut" CURSOR="$save_cur"  ;;
+  esac
+}
+
+
 # exec fix_cursor function every time before drawing the prompt
 precmd_functions+=(fix_cursor)
 
 # enable surround widget
-autoload -Uz surround
+#autoload -Uz surround
 
 # enable selection of surrounded text for surround zle widget
 autoload -U select-bracketed
@@ -140,7 +272,7 @@ for m in visual vicmd; do
   done
 done
 
-autoload -U select-quoted
+#autoload -U select-quoted
 zle -N select-quoted
 for m in visual vicmd; do
   for c in {a,i}{\',\",\`}; do
@@ -164,7 +296,7 @@ bindkey -M vicmd 'Tds' delete-surround
 
 # enable addition of surroundings to a text
 # normal mode: ys<movement><symbol>
-# visual mode: ys<symbol>
+# visual mode: S<symbol>
 zle -N add-surround surround
 bindkey -M vicmd 'Tys' add-surround
 bindkey -M visual S add-surround
