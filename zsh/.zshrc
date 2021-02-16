@@ -124,8 +124,13 @@ source $ZSH/oh-my-zsh.sh
 #                   ALIASES DEFINITIONS {{{1
 #########################################################
 # colorful ls
-if [ -x /usr/bin/dircolors ]; then
-    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+if which dircolors >/dev/null; then
+    if [[ -r ~/.dircolors ]]; then
+        eval "$(dircolors -b ~/.dircolors)"
+    else
+        eval "$(dircolors -b)"
+    fi
+
     alias ls='ls --color=auto'
     alias dir='dir --color=auto'
     alias vdir='vdir --color=auto'
@@ -139,23 +144,69 @@ alias ll='ls -alFh'
 alias la='ls -A'
 alias l='ls -CF'
 
-# clipboard copy and paste
-if ! which pbcopy >/dev/null; then
-    if which xclip >/dev/null; then
-        alias pbcopy='xclip -selection clipboard'
-        alias pbpaste='xclip -selection clipboard -o'
-    elif which xsel >/dev/null; then
-        alias pbcopy='xsel --clipboard --input'
-        alias pbpaste='xsel --clipboard --output'
-    else
-        if which termux-clipboard-set >/dev/null; then
-            alias pbcopy='termux-clipboard-set'
-        fi
-        if which termux-clipboard-get >/dev/null; then
-            alias pbpaste='termux-clipboard-get'
-        fi
+# system clipboard copy and paste
+if which xclip >/dev/null; then
+    alias cp-clipbrd='xclip -selection clipboard'
+    alias pt-clipbrd='xclip -selection clipboard -o'
+elif which xsel >/dev/null; then
+    alias cp-clipbrd='xsel --clipboard --input'
+    alias pt-clipbrd='xsel --clipboard --output'
+else
+    if which termux-clipboard-set >/dev/null; then
+        alias cp-clipbrd='termux-clipboard-set'
+    elif which pbcopy >/dev/null; then
+        alias cp-clipbrd='pbcopy'
+    fi
+
+    if which termux-clipboard-get >/dev/null; then
+        alias pt-clipbrd='termux-clipboard-get'
+    elif which pbpaste >/dev/null; then
+        alias pt-clipbrd='pbpaste'
     fi
 fi
+
+# widget to copy selection to system clipboard
+# use it by selecting a region while in vim visual mode,
+# press : to enter execute mode and type cp_clipbrd_widget
+function cp_clipbrd_widget() {
+    local start_pos end_pos
+
+    if ! which cp-clipbrd >/dev/null || [[ -z $CURSOR ]]; then
+        return 1
+    fi
+
+    # if not in visual mode copy only the current char
+    if (( ${REGION_ACTIVE:-0} == 0 )); then
+        start_pos=end_pos=$CURSOR
+    elif (( $CURSOR > $MARK )); then
+        start_pos=$MARK
+        end_pos=$CURSOR
+    else
+        start_pos=$CURSOR
+        end_pos=$MARK
+    fi
+
+    # if in visual line mode, find the start and end of first and last lines
+    if (( ${REGION_ACTIVE:-0} == 2 )); then
+        local regex
+
+        # start of first line
+        regex='.*'$'\n'
+        if [[ ${BUFFER:0:$start_pos} =~ $regex ]]; then
+            start_pos=$(( MEND ))
+        fi
+
+        # end of last line
+        regex='[^'$'\n]*'
+        if [[ ${BUFFER:$end_pos} =~ $regex ]];then
+            end_pos=$(( end_pos + MEND - 1 ))
+        fi
+    fi
+
+    # copy the selection using the clipboard program aliased above
+    printf $BUFFER[$(( start_pos + 1 )),$(( end_pos + 1 ))] | cp-clipbrd
+}
+zle -N cp_clipbrd_widget
 
 alias lsblk='lsblk -o NAME,TYPE,FSTYPE,MOUNTPOINT,SIZE,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID,LABEL'
 
