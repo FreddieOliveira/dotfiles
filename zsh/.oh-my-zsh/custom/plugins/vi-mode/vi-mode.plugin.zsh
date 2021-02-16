@@ -101,6 +101,30 @@ function yank-hack() {
   fi
 }
 
+function vim_sneak_forward() {
+  read -k 2 match
+
+  # non greedy match
+  if [[ $RBUFFER =~ [^${match[1]}]$match ]] && (( $MEND > 2 )); then
+    CURSOR=$(( CURSOR + MEND - 2 ))
+    return 0
+  fi
+
+  return 1
+}
+
+function vim_sneak_backward() {
+  read -k 2 match
+
+  # greedy match
+  if [[ $LBUFFER =~ .*$match ]]; then
+    CURSOR=$(( MEND - 2 ))
+    return 0
+  fi
+
+  return 1
+}
+
 # exec fix_cursor function every time before drawing the prompt
 precmd_functions+=(fix_cursor)
 
@@ -123,6 +147,12 @@ for m in visual vicmd; do
     bindkey -M $m $c select-quoted
   done
 done
+
+# simulate 'justinmk/vim-sneak' plugin
+zle -N vim_sneak_forward
+zle -N vim_sneak_backward
+bindkey -M vicmd 's' vim_sneak_forward
+bindkey -M vicmd 'S' vim_sneak_backward
 
 # enable edition/deletion of surrounded text
 # edit: cs<before><after>
@@ -160,6 +190,10 @@ zle -N zle-keymap-select
 bindkey -M vicmd 'r' single_replace
 bindkey -M vicmd 'R' multi_replace
 
+# disable cycling through history when moving up/down
+bindkey -M vicmd 'j' down-line
+bindkey -M vicmd 'k' up-line
+
 # make ctrl-j and crtl-m alias to ENTER
 bindkey -M vicmd '^J' accept-line
 bindkey -M vicmd '^M' accept-line
@@ -176,11 +210,11 @@ bindkey -M viins '^N' down-line-or-beginning-search
 bindkey -M viins '^[OA' up-line-or-beginning-search
 bindkey -M viins '^[OB' down-line-or-beginning-search
 
-# ctrl-r and ctrl-s to search the history
+# ctrl-r and ctrl-s search the history
 bindkey '^R' history-incremental-search-backward
 bindkey '^S' history-incremental-search-forward
 
-# ctrl-a and ctrl-e to move to beginning/end of line
+# ctrl-a and ctrl-e move to beginning/end of line
 bindkey '^A' beginning-of-line
 bindkey '^E' end-of-line
 
@@ -191,24 +225,24 @@ bindkey -M viins '^U' backward-kill-line
 # ctrl-k cut the line from the cursor to the end in insert mode
 bindkey -M viins '^K' kill-line
 
-# alt-. to insert the last word from the previous command (!$)
+# alt-. insert the last word from the previous command (!$)
 bindkey -M viins '^[.' insert-last-word
 
-# alt-d to cut the current word in insert mode
+# alt-d cut the current word in insert mode
 bindkey -M viins '^[d' kill-word
 
-# ctrl-y to paste when in insert mode
+# ctrl-y paste in insert mode
 bindkey -M viins '^Y' yank
 
-# alt-b and alt-f to move one word backward/forward in insert mode
+# alt-b and alt-f move one word backward/forward in insert mode
 bindkey -M viins '^[b' backward-word
 bindkey -M viins '^[f' forward-word
 
-# allow to move back and forward chars while in insert mode
+# ctrl-f and ctrl-b move backward/forward chars in insert mode
 bindkey -M viins '^F' forward-char
 bindkey -M viins '^B' backward-char
 
-# to ctrl-d to delete the current char when in insert mode
+# ctrl-d delete the current char in insert mode
 bindkey -M viins '^D' delete-char
 
 # delete backward char even past the point where entered in insert mode
