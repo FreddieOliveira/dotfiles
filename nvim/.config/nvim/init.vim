@@ -16,7 +16,7 @@ Plug 'honza/vim-snippets'                " ultisnips provider
 Plug 'ludovicchabant/vim-gutentags'      " ctags auto generator
 Plug 'skywind3000/gutentags_plus'        " cscope useful shortcuts
 Plug 'szw/vim-maximizer'                 " tmux C-z
-Plug 'terryma/vim-multiple-cursors'      " sublime like multi cursors
+Plug 'mg979/vim-visual-multi'            " sublime like multi cursors
 Plug 'lervag/vimtex'                     " LaTeX integration
 Plug 'justinmk/vim-sneak'                " quick cursor jump around
 Plug 'ryanoasis/vim-devicons'            " file type icons
