@@ -80,7 +80,7 @@ list() {
 
 install() {
   local dotfiles exclude
-  local install_cmd='cp -i'
+  local install_cmd='cp -if'
   local plugins=0
   local ret=0
 
@@ -103,7 +103,7 @@ install() {
         shift;;
       -s|--symlink )
         # some busybox's 'ln' miss the '-i' option
-        install_cmd='cp -is'
+        install_cmd='cp -ifs'
         shift;;
       '' )
         break;;
