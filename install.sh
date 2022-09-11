@@ -62,7 +62,7 @@ list() {
       printf -- "-%.s" {1..25}
       printf "\n"
       local spaces=$(( (25 - ${#dir}) / 2 ))
-      printf " %.s" $(eval echo {1..$spaces})
+      printf " %.s" $(eval echo "{1..$spaces}")
       printf "%s\n" "${dir^^}"
       printf -- "-%.s" {1..25}
       printf "\nDOTFILES:\n"
@@ -100,10 +100,10 @@ list() {
 }
 
 install() {
-  local dotfiles exclude
-  local install_cmd='cp -if'
+  local dotfiles dotfiles_aux exclude
   local plugins=0
   local yes=0
+  local symlink=0
   local ret=0
 
   # parse the positional parameters
@@ -113,7 +113,7 @@ install() {
         usage install
         exit 2;;
       -e | --exclude )
-        if [[ "$dotfiles" ]] || [[ "$exclude" ]] || [[ -z "$2" ]]; then
+        if [[ "$dotfiles_aux" ]] || [[ "$exclude" ]] || [[ -z "$2" ]]; then
           usage install
           exit 2
         else
@@ -125,7 +125,7 @@ install() {
         shift;;
       -s | --symlink )
         # some busybox's 'ln' miss the '-i' option
-        install_cmd='cp -ifs'
+        symlink=1
         shift;;
       -y )
         yes=1
@@ -133,40 +133,58 @@ install() {
       '' )
         break;;
       * )
-        if [[ "$dotfiles" ]] || [[ "$exclude" ]]; then
+        if [[ "$dotfiles_aux" ]] || [[ "$exclude" ]]; then
           usage install
           exit 2
         else
-          dotfiles="${1//,/ }"
+          dotfiles_aux="${1//,/ }"
         fi
         shift;;
     esac
   done
 
-  (( yes == 1 )) && install_cmd=${install_cmd//i/}
-  [[ -z "$dotfiles" ]] && dotfiles="$(ls)"
+  [[ -z "$dotfiles_aux" ]] && dotfiles_aux="$(ls)"
 
-  for dir in $dotfiles; do
+  for dir in $dotfiles_aux; do
     # if it's an existent directory and it doesn't start with '.'
     if [[ -d "$dir" ]] && [[ "$dir" != '.'* ]]; then
       # if it's not meant to be ignored
       if [[ "$dir" != @($exclude) ]]; then
-        # create the subdirs
-        find "$dir"/ -type d -exec bash -c \
-          'mkdir -p "$HOME/${0#*/}"' {} \;
-        # install the dotfile
-        find "$dir" -type f -exec bash -c \
-          '$0 "$PWD/$1" "$HOME/${1#*/}"' "$install_cmd" {} \;
+        dotfiles="$dotfiles $dir"
       fi
     elif [[ ! -e "$dir" ]]; then
       printf "%s\n" "Inexistent dotfile $dir"
     fi
   done
 
+  install_dotfiles "$dotfiles" "$symlink" "$yes"
+
   if (( plugins == 1 )); then
-    install_plugins "${dotfiles// /,}"
+    install_plugins "$dotfiles" "$yes"
     ret=$?
   fi
+
+  return $ret
+}
+
+install_dotfiles() {
+  local dotfiles="$1"
+  local symlink="$2"
+  local yes="$3"
+  local install_cmd='cp -f'
+  local ret=0
+
+  (( symlink == 1 )) && install_cmd="${install_cmd}s"
+  (( yes == 0 )) && install_cmd="${install_cmd}i"
+
+  for dotfile in $dotfiles; do
+    # create the subdirs
+    find "$dotfile/" -type d -exec bash -c \
+      'mkdir -p "$HOME/${0#*/}"' {} \;
+    # install the dotfile
+    find "$dotfile" -type f -exec bash -c \
+      '$0 "$PWD/$1" "$HOME/${1#*/}"' "$install_cmd" {} \;
+  done
 
   return $ret
 }
@@ -175,27 +193,16 @@ install_plugins() {
   local dotfiles="$1"
   local ret=0
 
-  for dotfile in ${dotfiles//,/ }; do
+  for dotfile in $dotfiles; do
     case "$dotfile" in
       neovim )
-        sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
-          https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-        nvim -es -u ~/.config/nvim/init.vim <<< 'PlugUpdate --sync'
+        install_nvim_plugins
         ;;
       tmux )
-        git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-        git clone https://github.com/tmux-plugins/tmux-resurrect ~/.tmux/plugins/tmux-resurrect
-        git clone https://github.com/tmux-plugins/tmux-continuum ~/.tmux/plugins/tmux-continuum
+        install_tmux_plugins
         ;;
       zsh )
-        git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
-          ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k
-        git clone https://github.com/Aloxaf/fzf-tab \
-          ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fzf-tab
-        git clone https://github.com/zsh-users/zsh-autosuggestions \
-          ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-        git clone https://github.com/zdharma/fast-syntax-highlighting.git \
-          ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting
+        install_zsh_plugins
         ;;
       * )
         ;;
@@ -203,6 +210,30 @@ install_plugins() {
   done
 
   return $ret
+}
+
+install_nvim_plugins() {
+  sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+  nvim -es -u ~/.config/nvim/init.vim <<< 'PlugUpdate --sync'
+}
+
+install_tmux_plugins() {
+  git clone --depth=1 https://github.com/tmux-plugins/tpm \
+    ~/.tmux/plugins/tpm
+  "$HOME/.tmux/plugins/tpm/bin/install_plugins"
+}
+
+install_zsh_plugins() {
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
+    "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
+  git clone --depth=1 https://github.com/Aloxaf/fzf-tab \
+    "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fzf-tab"
+  git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
+    "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+  git clone --depth=1 https://github.com/zdharma-continuum/fast-syntax-highlighting.git \
+      "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting"
 }
 
 tui() {
