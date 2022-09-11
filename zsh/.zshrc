@@ -1,14 +1,25 @@
 #            GLOBAL ENVIRONMENT VARIABLES {{{1
 #########################################################
+# check if we're inside tmux
+if [[ -z "$TMUX" ]]; then
+  export TERM='xterm-256color'
+else
+  export TERM='tmux-256color'
+fi
 export DISPLAY=:1
 export EDITOR='nvim'
 export PATH="$HOME/.local/bin:$PATH"
-export TERM='tmux-256color'
 export ZSH="$HOME/.oh-my-zsh"
-export FZF_DEFAULT_OPTS="--height=75% --tiebreak=begin --preview-window=down:80%:wrap:hidden --cycle --preview='preview.sh {}' --bind=ctrl-space:toggle-preview --keep-right"
+export FZF_DEFAULT_OPTS="--height=75% --layout=reverse --tiebreak=begin --preview-window=down:80%:wrap:hidden --cycle --preview='preview.sh {}' --bind=ctrl-space:toggle-preview --hscroll-off=999 --keep-right"
 # export MANPATH="/usr/local/man:$MANPATH"
-# export LC_ALL='pt_BR.UTF-8'
 # export LANG='pt_BR.UTF-8'
+# export LC_CTYPE='pt_BR.UTF-8'
+# export LC_ALL='pt_BR.UTF-8'
+PATH="/data/data/com.termux/files/home/perl5/bin${PATH:+:${PATH}}"; export PATH;
+PERL5LIB="/data/data/com.termux/files/home/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
+PERL_LOCAL_LIB_ROOT="/data/data/com.termux/files/home/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
+PERL_MB_OPT="--install_base \"/data/data/com.termux/files/home/perl5\""; export PERL_MB_OPT;
+PERL_MM_OPT="INSTALL_BASE=/data/data/com.termux/files/home/perl5"; export PERL_MM_OPT;
 #########################################################
 #              GLOBAL OH-MY-ZSH SETTINGS {{{1
 #########################################################
@@ -33,9 +44,9 @@ POWERLEVEL9K_VCS_GIT_GITHUB_ICON=''
 POWERLEVEL9K_VCS_MODIFIED_BACKGROUND='yellow'
 POWERLEVEL9K_VCS_UNTRACKED_BACKGROUND='yellow'
 POWERLEVEL9K_STATUS_OK_BACKGROUND="black"
-POWERLEVEL9K_STATUS_OK_FOREGROUND="green"
+POWERLEVEL9K_STATUS_OK_FOREGROUND="40"
 POWERLEVEL9K_STATUS_ERROR_BACKGROUND="black"
-POWERLEVEL9K_STATUS_ERROR_FOREGROUND="red"
+POWERLEVEL9K_STATUS_ERROR_FOREGROUND="196"
 POWERLEVEL9K_STATUS_LEFT_LEFT_WHITESPACE=''
 POWERLEVEL9K_COMMAND_EXECUTION_TIME_FOREGROUND="black"
 POWERLEVEL9K_COMMAND_EXECUTION_TIME_BACKGROUND="yellow"
@@ -78,19 +89,10 @@ ZSH_AUTOSUGGEST_ACCEPT_WIDGETS=(
     vi-add-eol
 )
 ################################
-#>----| zfz-tab {{{2
+#>----| fzf-tab {{{2
 ################################
-# fix window preview. See https://github.com/Aloxaf/fzf-tab/issues/77
-local extract="
-# trim input
-local in=\${\${\"\$(<{f})\"%\$'\0'*}#*\$'\0'}
-# get ctxt for current completion
-local -A ctxt=(\"\${(@ps:\2:)CTXT}\")
-# real path
-local realpath=\$(eval echo \${ctxt[IPREFIX]}\${ctxt[hpre]}\$in)
-"
-zstyle ':fzf-tab:complete:*:*' extra-opts \
-    --preview=$extract";preview.sh \$realpath"
+zstyle ':fzf-tab:*' fzf-flags --height=75% --bind=ctrl-space:toggle-preview,tab:toggle+down --tiebreak=begin --preview-window=down:80%:nowrap:hidden --cycle -m
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'preview.sh $realpath'
 # prevent populating fzf query. See https://github.com/Aloxaf/fzf-tab/issues/99
 #zstyle ':fzf-tab:*' query-string prefix first
 ################################
@@ -106,11 +108,11 @@ ZSH_TMUX_AUTOQUIT="false"
 # add wisely, as too many plugins slow down shell startup
 # also, be aware of the plugins order, as one may interfer with others
 plugins=(
-    tmux # define some tmux commands aliases
-    fasd # enable fasd if its installed
+    tmux
+    fasd # enable fasd if it's installed
     vi-mode # be sure to put this before fzf
-    fzf-tab # be sure to put this before fzf
     fzf # enable fzf if its installed
+    fzf-tab # enable fzf when hitting TAB
     zsh-autosuggestions # suggests commands as typing based on history
     #zsh-syntax-highlighting # colorize the current command according to its correctness
     fast-syntax-highlighting # add real time syntax highlighting
@@ -165,49 +167,6 @@ else
     fi
 fi
 
-# widget to copy selection to system clipboard
-# use it by selecting a region while in vim visual mode,
-# press : to enter execute mode and type cp_clipbrd_widget
-function cp_clipbrd_widget() {
-    local start_pos end_pos
-
-    if ! which cp-clipbrd >/dev/null || [[ -z $CURSOR ]]; then
-        return 1
-    fi
-
-    # if not in visual mode copy only the current char
-    if (( ${REGION_ACTIVE:-0} == 0 )); then
-        start_pos=end_pos=$CURSOR
-    elif (( $CURSOR > $MARK )); then
-        start_pos=$MARK
-        end_pos=$CURSOR
-    else
-        start_pos=$CURSOR
-        end_pos=$MARK
-    fi
-
-    # if in visual line mode, find the start and end of first and last lines
-    if (( ${REGION_ACTIVE:-0} == 2 )); then
-        local regex
-
-        # start of first line
-        regex='.*'$'\n'
-        if [[ ${BUFFER:0:$start_pos} =~ $regex ]]; then
-            start_pos=$(( MEND ))
-        fi
-
-        # end of last line
-        regex='[^'$'\n]*'
-        if [[ ${BUFFER:$end_pos} =~ $regex ]];then
-            end_pos=$(( end_pos + MEND - 1 ))
-        fi
-    fi
-
-    # copy the selection using the clipboard program aliased above
-    printf $BUFFER[$(( start_pos + 1 )),$(( end_pos + 1 ))] | cp-clipbrd
-}
-zle -N cp_clipbrd_widget
-
 alias lsblk='lsblk -o NAME,TYPE,FSTYPE,MOUNTPOINT,SIZE,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID,LABEL'
 
 # make F1-F12 keys work inside htop
@@ -216,6 +175,91 @@ alias htop='TERM=linux htop'
 # useful apt commands with fzf
 alias add="apt-cache search . | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {} 2>/dev/null; dpkg-query -L {} 2>&1 | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev/* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -ro pkg install"
 alias del="dpkg-query --no-pager -W -f='\${binary:Package}\n' | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {} 2>/dev/null; dpkg-query -L {} | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev/* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -ro apt purge"
+#########################################################
+#                 FUNCTIONS DEFINITIONS {{{1
+#########################################################
+# widget to copy selection to system clipboard
+# use it by selecting a region while in vim visual mode,
+# press : to enter execute mode and type cp_clipbrd_widget
+function cp_clipbrd_widget() { # {{{
+  local start_pos end_pos
+
+  if ! which cp-clipbrd >/dev/null || [[ -z $CURSOR ]]; then
+    return 1
+  fi
+
+  # if not in visual mode copy only the current char
+  if (( ${REGION_ACTIVE:-0} == 0 )); then
+    start_pos=end_pos=$CURSOR
+  elif (( $CURSOR > $MARK )); then
+    start_pos=$MARK
+    end_pos=$CURSOR
+  else
+    start_pos=$CURSOR
+    end_pos=$MARK
+  fi
+
+  # if in visual line mode, find the start and end of first and last lines
+  if (( ${REGION_ACTIVE:-0} == 2 )); then
+    local regex
+
+    # start of first line
+    regex='.*'$'\n'
+    if [[ ${BUFFER:0:$start_pos} =~ $regex ]]; then
+      start_pos=$(( MEND ))
+      else  # if regex didn't match, we're in the first line
+      start_pos=0
+    fi
+
+    # end of last line
+    regex='[^'$'\n]*'
+    if [[ ${BUFFER:$end_pos} =~ $regex ]];then
+      end_pos=$(( end_pos + MEND - 1 ))
+    fi
+  fi
+
+  # copy the selection using the clipboard program aliased above
+  printf $BUFFER[$(( start_pos + 1 )),$(( end_pos + 1 ))] | cp-clipbrd
+} # }}}
+zle -N cp_clipbrd_widget
+
+# Override fzf plugin's widget which is called by CTRL+r shortcut
+# (enhanced history-incremental-search-backward)
+fzf-history-widget() { # {{{
+  local selected fzf_default_opts ret
+
+  setopt localoptions noglobsubst noposixbuiltins pipefail no_aliases 2> /dev/null
+
+  fzf_default_opts="--height ${FZF_TMUX_HEIGHT:-40%} $FZF_DEFAULT_OPTS -n2..,.. --tiebreak=index --bind=ctrl-r:toggle-sort,ctrl-z:ignore $FZF_CTRL_R_OPTS +m"
+
+  selected=( $(fc -rl 1 |
+    perl -ne 'print if !$seen{(/^\s*[0-9]+\**\s+(.*)/, $1)}++' |
+    FZF_DEFAULT_OPTS="${fzf_default_opts//--keep-right/}" $(__fzfcmd)) )
+
+  ret=$?
+  zle reset-prompt
+
+  if [ -n "$selected" ]; then
+    if (( $#selected == 2 )); then
+      BUFFER="$BUFFER${selected:1}"
+      CURSOR=$#BUFFER
+    elif (( $#selected > 2 )); then
+      selected=( $(printf '%s\n' "${selected[*]:1}" ${selected:2} |
+        FZF_DEFAULT_OPTS="$fzf_default_opts" $(__fzfcmd)) )
+
+      ret=$?
+      zle reset-prompt
+
+      if [ -n "$selected" ]; then
+        BUFFER="$BUFFER$selected"
+        CURSOR=$#BUFFER
+      fi
+    fi
+  fi
+
+  return $ret
+} # }}}
+zle -N fzf-history-widget
 #########################################################
 #                   GENERAL CONFIGS {{{1
 #########################################################
@@ -229,4 +273,8 @@ git config --global alias.d difftool
 
 # fzf-tab config that must be set at the end
 zstyle ':completion:*:descriptions' format '[%d]' # enable group support
+
+# vi keybinding that's overwriten by fzf plugin
+bindkey -M vicmd '^R' redo
 #########################################################
+
