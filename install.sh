@@ -56,9 +56,7 @@ list() {
     return 2
   fi
 
-  # convert the space separated string 'dotfiles'
-  # into an array for the for loop command
-  for dir in $(printf "%s" "${dotfiles}"); do
+  for dir in ${dotfiles}; do
     # if it's an existent directory and it doesn't start with '.'
     if [ -d "${dir}" ] && [[ "${dir}" != '.'* ]] ; then
       # use tree command if it's installed
@@ -126,9 +124,7 @@ install() {
   (( yes == 1 )) && install_cmd=${install_cmd//i/}
   [ -z "${dotfiles}" ] && dotfiles=$(ls)
 
-  # convert the space separated string 'dotfiles'
-  # into an array for the for loop command
-  for dir in $(printf "%s" "${dotfiles}"); do
+  for dir in ${dotfiles}; do
     # if it's an existent directory and it doesn't start with '.'
     if [ -d "${dir}" ] && [[ "${dir}" != '.'* ]] ; then
       # if it's not meant to be ignored
@@ -157,7 +153,7 @@ install_plugins() {
   local dotfiles=$0
   local ret=0
 
-  for dotfile in $(printf "%s" "${dotfiles//,/ }"); do
+  for dotfile in ${dotfiles//,/ }; do
     case $dotfile in
       neovim )
         sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
