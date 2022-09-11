@@ -29,6 +29,7 @@ install_usage() {
   printf "  -e, --exclude <dotfile,...>\tInstall all dotfiles, exept the comma\n\t\t\t\tseparated listed ones\n\n"
   printf "  -p, --plugins\t\t\tInstall plugins for selected dotfiles. If\n\t\t\t\tno dotfile was especified, then install all\n\t\t\t\tplugins. Available ones are zsh (fast-syntax\n\t\t\t\t-highlighting, fzf-tab, zsh-autosuggestions)\n\t\t\t\tnvim (see init.vim file) and tmux (tpm,\n\t\t\t\ttmux-resurrect, tmux-continuum)\n\n"
   printf "  -s, --symlink\t\t\tInstall the dotfiles as symlinks instead of\n\t\t\t\tcopying them. This is useful to keep using\n\t\t\t\tthis folder to manage your dotfiles with git\n"
+  printf "  -y\t\t\t\tAssume yes for overwrite questions\n"
 }
 
 list_usage() {
@@ -82,6 +83,7 @@ install() {
   local dotfiles exclude
   local install_cmd='cp -if'
   local plugins=0
+  local yes=0
   local ret=0
 
   # parse the positional parameters
@@ -105,6 +107,9 @@ install() {
         # some busybox's 'ln' miss the '-i' option
         install_cmd='cp -ifs'
         shift;;
+      -y )
+        yes=1
+        shift;;
       '' )
         break;;
       * )
@@ -118,6 +123,7 @@ install() {
     esac
   done
 
+  (( yes == 1 )) && install_cmd=${install_cmd//i/}
   [ -z "${dotfiles}" ] && dotfiles=$(ls)
 
   # convert the space separated string 'dotfiles'
