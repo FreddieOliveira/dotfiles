@@ -142,7 +142,7 @@ install() {
   done
 
   if (( $plugins == 1 )); then
-    install_plugins ${dotfile// /,}
+    install_plugins "${dotfiles// /,}"
     ret=$?
   fi
 
@@ -150,7 +150,7 @@ install() {
 }
 
 install_plugins() {
-  local dotfiles=$0
+  local dotfiles=$1
   local ret=0
 
   for dotfile in ${dotfiles//,/ }; do
