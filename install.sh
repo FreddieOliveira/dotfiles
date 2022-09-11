@@ -23,18 +23,18 @@ general_usage() {
 }
 
 install_usage() {
-  printf "Usage:\t%s install [-eps] <dotfile,...>\n" "${0##*/}"
+  printf "Usage:\t%s install [-epsy] [<dotfile,...>]\n" "${0##*/}"
   printf "\nInstall specified dotfiles by comma separated list. If no dotfiles\nare specified, then install all of them. Alternatively, install all\ndotfiles, but the specified ones.\n"
   printf "\nArguments:\n"
-  printf "  -e, --exclude <dotfile,...>\tInstall all dotfiles, exept the comma\n\t\t\t\tseparated listed ones\n\n"
-  printf "  -p, --plugins\t\t\tInstall plugins for selected dotfiles. If\n\t\t\t\tno dotfile was especified, then install all\n\t\t\t\tplugins. Available ones are zsh (fast-syntax\n\t\t\t\t-highlighting, fzf-tab, zsh-autosuggestions)\n\t\t\t\tnvim (see init.vim file) and tmux (tpm,\n\t\t\t\ttmux-resurrect, tmux-continuum)\n\n"
-  printf "  -s, --symlink\t\t\tInstall the dotfiles as symlinks instead of\n\t\t\t\tcopying them. This is useful to keep using\n\t\t\t\tthis folder to manage your dotfiles with git\n"
+  printf "  -e, --exclude <dotfile,...>\tInstall all dotfiles, exept the comma\n\t\t\t\tseparated listed ones. It's an error to\n\t\t\t\tspecify a dotfile list and an exclusion list\n\n"
+  printf "  -p, --plugins\t\t\tInstall plugins for selected dotfiles. If\n\t\t\t\tno dotfile was especified, then install all\n\t\t\t\tplugins.\n\n"
+  printf "  -s, --symlink\t\t\tInstall the dotfiles as symlinks instead of\n\t\t\t\tcopying them. This is useful to keep using\n\t\t\t\tthis folder to manage your dotfiles with git\n\n"
   printf "  -y\t\t\t\tAssume yes for overwrite questions\n"
 }
 
 list_usage() {
   printf "Usage:\t%s list [<dotfile,...>]\n" "${0##*/}"
-  printf "\nList available dotfiles and its files. It's possible to specify dotfiles\nseparated by comma. If no dotfiles are specified, then list all of them.\n"
+  printf "\nList available dotfiles and its files as well as its plugins.\nIt's possible to specify dotfiles separated by comma. If no\ndotfiles are specified, then list all of them.\n"
 }
 
 tui_usage() {
@@ -59,6 +59,13 @@ list() {
   for dir in $dotfiles; do
     # if it's an existent directory and it doesn't start with '.'
     if [[ -d "$dir" ]] && [[ "$dir" != '.'* ]]; then
+      printf -- "-%.s" {1..25}
+      printf "\n"
+      local spaces=$(( (25 - ${#dir}) / 2 ))
+      printf " %.s" $(eval echo {1..$spaces})
+      printf "%s\n" "${dir^^}"
+      printf -- "-%.s" {1..25}
+      printf "\nDOTFILES:\n"
       # use tree command if it's installed
       if command -v tree 2>/dev/null 1>&2; then
         tree --noreport -a "$dir"
@@ -72,6 +79,21 @@ list() {
     elif [[ ! -e "$dir" ]]; then
       printf "%s\n" "Inexistent dotfile $dir"
     fi
+
+    case "$dir" in
+      nvim )
+        printf "PLUGINS:\n"
+        printf "plug-vim\nsee init.vim file\n\n"
+        ;;
+      tmux )
+        printf "PLUGINS:\n"
+        printf "tpm\ntmux-resurrect\ntmux-continuum\n\n"
+        ;;
+      zsh )
+        printf "PLUGINS:\n"
+        printf "oh-my-zsh\nfast-syntax-highlighting\nfzf-tab\nzsh-autosuggestions\n\n"
+        ;;
+    esac
   done
 
   return $ret
@@ -134,7 +156,7 @@ install() {
           'mkdir -p "$HOME/${0#*/}"' {} \;
         # install the dotfile
         find "$dir" -type f -exec bash -c \
-          '$0 "$PWD/$1" "${HOME}/${1#*/}"' "$install_cmd" {} \;
+          '$0 "$PWD/$1" "$HOME/${1#*/}"' "$install_cmd" {} \;
       fi
     elif [[ ! -e "$dir" ]]; then
       printf "%s\n" "Inexistent dotfile $dir"
