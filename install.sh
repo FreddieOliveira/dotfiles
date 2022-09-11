@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 usage() {
-  local usage_type="${@}"
+  local usage_type="$1"
 
-  case "${usage_type}" in
+  case "$usage_type" in
     install ) install_usage;;
     list ) list_usage;;
     tui ) tui_usage;;
@@ -47,34 +47,34 @@ list() {
   local ret=1
 
   # parse the positional parameters
-  if [ "${#}" -eq 0 ]; then
+  if (( $# == 0 )); then
     dotfiles=$(ls)
-  elif [ "${#}" -eq 1 ] && [[ "${1}" != @('-h'|'--help') ]]; then
+  elif (( $# == 1 )) && [[ "$1" != @('-h'|'--help') ]]; then
     dotfiles="${1//,/ }"
   else
     usage list
     return 2
   fi
 
-  for dir in ${dotfiles}; do
+  for dir in $dotfiles; do
     # if it's an existent directory and it doesn't start with '.'
-    if [ -d "${dir}" ] && [[ "${dir}" != '.'* ]] ; then
+    if [[ -d "$dir" ]] && [[ "$dir" != '.'* ]]; then
       # use tree command if it's installed
       if command -v tree 2>/dev/null 1>&2; then
-        tree --noreport -a "${dir}"
+        tree --noreport -a "$dir"
       # otherwise, use find command
       else
-        printf "%s\n" "${dir}"
-        find "${dir}" -type f
+        printf "%s\n" "$dir"
+        find "$dir" -type f
       fi
       printf "\n"
       ret=0
-    elif [ ! -e "${dir}" ]; then
-      printf "%s\n" "Inexistent dotfile ${dir}"
+    elif [[ ! -e "$dir" ]]; then
+      printf "%s\n" "Inexistent dotfile $dir"
     fi
   done
 
-  return "${ret}"
+  return $ret
 }
 
 install() {
@@ -86,22 +86,22 @@ install() {
 
   # parse the positional parameters
   while true; do
-    case "${1}" in
-      -h|--help )
+    case "$1" in
+      -h | --help )
         usage install
         exit 2;;
-      -e|--exclude )
-        if [ "${dotfiles}" ] || [ "${exclude}" ] || [ -z $2 ]; then
+      -e | --exclude )
+        if [[ "$dotfiles" ]] || [[ "$exclude" ]] || [[ -z "$2" ]]; then
           usage install
           exit 2
         else
           exclude="${2//,/|}"
         fi
         shift 2;;
-      -p|--plugins )
+      -p | --plugins )
         plugins=1
         shift;;
-      -s|--symlink )
+      -s | --symlink )
         # some busybox's 'ln' miss the '-i' option
         install_cmd='cp -ifs'
         shift;;
@@ -111,7 +111,7 @@ install() {
       '' )
         break;;
       * )
-        if [ "${dotfiles}" ] || [ "${exclude}" ]; then
+        if [[ "$dotfiles" ]] || [[ "$exclude" ]]; then
           usage install
           exit 2
         else
@@ -122,26 +122,26 @@ install() {
   done
 
   (( yes == 1 )) && install_cmd=${install_cmd//i/}
-  [ -z "${dotfiles}" ] && dotfiles=$(ls)
+  [[ -z "$dotfiles" ]] && dotfiles="$(ls)"
 
-  for dir in ${dotfiles}; do
+  for dir in $dotfiles; do
     # if it's an existent directory and it doesn't start with '.'
-    if [ -d "${dir}" ] && [[ "${dir}" != '.'* ]] ; then
+    if [[ -d "$dir" ]] && [[ "$dir" != '.'* ]]; then
       # if it's not meant to be ignored
-      if [[ $dir != @($exclude) ]]; then
+      if [[ "$dir" != @($exclude) ]]; then
         # create the subdirs
-        find "${dir}"/ -type d -exec bash -c \
-          'mkdir -p "${HOME}/${0#*/}"' {} \;
+        find "$dir"/ -type d -exec bash -c \
+          'mkdir -p "$HOME/${0#*/}"' {} \;
         # install the dotfile
-        find "${dir}" -type f -exec bash -c \
-          '${0} "${PWD}/${1}" "${HOME}/${1#*/}"' "${install_cmd}" {} \;
+        find "$dir" -type f -exec bash -c \
+          '$0 "$PWD/$1" "${HOME}/${1#*/}"' "$install_cmd" {} \;
       fi
-    elif [ ! -e "${dir}" ]; then
-      printf "%s\n" "Inexistent dotfile ${dir}"
+    elif [[ ! -e "$dir" ]]; then
+      printf "%s\n" "Inexistent dotfile $dir"
     fi
   done
 
-  if (( $plugins == 1 )); then
+  if (( plugins == 1 )); then
     install_plugins "${dotfiles// /,}"
     ret=$?
   fi
@@ -150,11 +150,11 @@ install() {
 }
 
 install_plugins() {
-  local dotfiles=$1
+  local dotfiles="$1"
   local ret=0
 
   for dotfile in ${dotfiles//,/ }; do
-    case $dotfile in
+    case "$dotfile" in
       neovim )
         sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
           https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
@@ -185,7 +185,7 @@ install_plugins() {
 
 tui() {
   # parse the positional parameters
-  if (( "${#}" != 0 )); then
+  if (( $# != 0 )); then
     usage tui
     return 2
   fi
@@ -206,18 +206,18 @@ tui() {
 
 main() {
   local ret=1
-  local command="${1}"
+  local command="$1"
 
-  case "${command}" in
-    install ) install "${@:2}" ; ret="${?}";;
-    list ) list "${@:2}" ; ret="${?}";;
-    tui ) tui "${@:2}" ; ret="${?}";;
+  case "$command" in
+    install ) install "${@:2}" ; ret=$?;;
+    list ) list "${@:2}" ; ret=$?;;
+    tui ) tui "${@:2}" ; ret=$?;;
     * ) usage ; ret=2;;
   esac
 
-  exit "${ret}"
+  exit $ret
 }
 
-cd "${BASH_SOURCE[0]%/*}"
-main "${@}"
+cd "${BASH_SOURCE[0]%/*}" || exit 1
+main "$@"
 
