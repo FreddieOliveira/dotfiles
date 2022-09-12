@@ -4,8 +4,13 @@ call plug#begin('~/.local/share/nvim/plugged')
 
 Plug 'Shougo/deoplete.nvim'              " autocompletion framework
 Plug 'deoplete-plugins/deoplete-clang'   " deoplete provider for C/C++
+Plug 'junegunn/fzf'                      " fzf integration
+Plug 'junegunn/fzf.vim'                  " fzf integration
 Plug 'junegunn/goyo.vim'                 " distraction free mode
 Plug 'sainnhe/gruvbox-material'          " colorscheme
+"Plug 'dracula/vim', { 'as': 'dracula' }  " colorscheme
+"Plug 'EdenEast/nightfox.nvim'            " colorscheme
+"Plug 'joshdick/onedark.vim'              " colorscheme
 Plug 'Yggdroot/indentLine'               " draw indent guides (not so good)
 Plug 'itchyny/lightline.vim'             " status bar
 Plug 'mengelbrecht/lightline-bufferline' " lightline top bar plugin
@@ -13,15 +18,13 @@ Plug 'junegunn/limelight.vim'            " text color dimmer (used with goyo)
 Plug 'neomake/neomake'                   " code linting
 Plug 'SirVer/ultisnips'                  " snippets framework
 Plug 'honza/vim-snippets'                " ultisnips provider
-Plug 'ludovicchabant/vim-gutentags'      " ctags auto generator
-Plug 'skywind3000/gutentags_plus'        " cscope useful shortcuts
+"Plug 'ludovicchabant/vim-gutentags'      " ctags auto generator
+"Plug 'skywind3000/gutentags_plus'        " cscope useful shortcuts
 Plug 'szw/vim-maximizer'                 " tmux C-z
 Plug 'mg979/vim-visual-multi'            " sublime like multi cursors
 Plug 'lervag/vimtex'                     " LaTeX integration
 Plug 'justinmk/vim-sneak'                " quick cursor jump around
 Plug 'ryanoasis/vim-devicons'            " file type icons
-Plug 'junegunn/fzf'                      " fzf integration
-Plug 'junegunn/fzf.vim'                  " fzf integration
 Plug 'vimwiki/vimwiki'
 "Plug 'amix/vim-zenroom2'                 " .md colorscheme when goyo is on
 "Plug 'iamcco/markdown-preview.nvim'      " web browser .md preview
@@ -195,9 +198,9 @@ let g:UltiSnipsJumpBackwardTrigger="<S-Tab>"
 " let g:vimtex_view_general_options = '--unique file:@pdf\#src:@line@tex'
 " let g:vimtex_view_general_options_latexmk = '--unique'
 " configure it to use deoplete
-call deoplete#custom#var('omni', 'input_patterns', {
-    \ 'tex': g:vimtex#re#deoplete
-    \})
+"call deoplete#custom#var('omni', 'input_patterns', {
+"    \ 'tex': g:vimtex#re#deoplete
+"    \})
 
 ">----| vim-sneak {{{2
 let g:sneak#label = 1
@@ -211,7 +214,15 @@ let g:vimwiki_list = [{
   \ 'path_html': '/sdcard/Documents/vimwiki/_site',
   \ 'template_ext': '.html',
   \ 'template_path': '/sdcard/Documents/vimwiki/templates/',
-\}]
+  \ }]
+
+let g:vimwiki_diary_months = {
+  \ 1: 'Janeiro', 2: 'Fevereiro', 3: 'Março',
+  \ 4: 'Abril', 5: 'Maio', 6: 'Junho',
+  \ 7: 'Julho', 8: 'Agosto', 9: 'Setembro',
+  \ 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
+  \ }
+
   "\ 'auto_export': 1,
   "\ 'custom_wiki2html': 'wiki2html.sh',
 """"""""""""""""""""""""""""""""""""""
@@ -245,6 +256,9 @@ set nocompatible
 filetype indent on
 filetype plugin on
 syntax on
+
+" save undo history
+set undofile
 
 " enable visual autocomplete for command menu
 set wildmenu
@@ -287,7 +301,7 @@ let g:indentLine_conceallevel=2
 
 " per file config
 au FileType tex,markdown,vimwiki set textwidth=68
-au FileType vimwiki UltiSnipsAddFiletypes markdown
+"au FileType vimwiki UltiSnipsAddFiletypes markdown
 au BufReadPre init.vim,.zshrc set foldmethod=marker
 au BufNewFile,BufRead *.neomuttrc,*.muttrc setfiletype neomuttrc
 
@@ -304,6 +318,9 @@ au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g
 """"""""""""""""""""""""""""""""""""""
 "           KEYBINDINGS {{{1
 """"""""""""""""""""""""""""""""""""""
+" copy selected text in visual mode with CTRL-C
+vnoremap <C-c> "+y
+
 " move vertically by visual line
 nnoremap j gj
 nnoremap k gk
@@ -320,11 +337,21 @@ vnoremap <silent><C-w>z :MaximizerToggle<CR>gv
 " inoremap <silent><C-w>z <C-o>:MaximizerToggle<CR>
 
 " unhighlight last match
-nnoremap <esc> :noh<CR>:<backspace><esc>
+nnoremap <Esc> :noh<CR>:<backspace><esc>
 
 " scroll text 3x faster with C-j and C-k
 noremap <C-j> 3<C-e>
 noremap <C-k> 3<C-y>
+
+" del in insert mode
+inoremap <C-d> <Del>
+
+" ctrl-k cut from cursor to end of line in insert
+inoremap <C-k> <space><Esc>C
+
+" ctrl-a and ctrl-e move to beginning/end of line
+inoremap <C-a> <Esc>I
+inoremap <C-e> <Esc>A
 
 " set exit terminal mode to esc key
 " tnoremap <Esc> <C-\><C-n>
@@ -367,9 +394,6 @@ nnoremap <leader>fl :BLines<CR>
 nnoremap <leader>fL :Lines<CR>
 nnoremap <leader>fm :Marks<CR>
 nnoremap <leader>ft :Tags<CR>
-
-" del in insert mode
-inoremap <C-d> <Del>
 """"""""""""""""""""""""""""""""""""""
 "            FUNCTIONS {{{1
 """"""""""""""""""""""""""""""""""""""
@@ -440,6 +464,8 @@ set background=dark
 " be sure to put this before 'colorscheme gruvbox-material'
 " available value: 'hard', 'medium'(default), 'soft'
 let g:gruvbox_material_background = 'medium'
+" available value: 'original', 'material'(default), 'mix'
+let g:gruvbox_material_palette = 'original'
 
 " custom highlight when using git difftool
 colorscheme gruvbox-material
