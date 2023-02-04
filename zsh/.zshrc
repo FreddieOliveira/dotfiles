@@ -139,12 +139,18 @@ if which dircolors >/dev/null; then
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
+    alias exa='exa --color=automatic'
 fi
 
 # some more ls aliases
 alias ll='ls -alFh'
 alias la='ls -A'
-alias l='ls -CF'
+
+if which exa >/dev/null; then
+  alias l='exa --icons --group-directories-first --all'
+else
+  alias l='ls -CF'
+fi
 
 # system clipboard copy and paste
 if which xclip >/dev/null; then
@@ -240,19 +246,23 @@ fzf-history-widget() { # {{{
   zle reset-prompt
 
   if [ -n "$selected" ]; then
+    # If the command doesn't have any arguments
     if (( $#selected == 2 )); then
-      BUFFER="$BUFFER${selected:1}"
-      CURSOR=$#BUFFER
+      selected=${${selected:1}//\\n/$'\n'}
+      BUFFER=$LBUFFER$selected$RBUFFER
+      CURSOR=$(( $#LBUFFER + $#selected ))
+    # If the command has at least one arguments
     elif (( $#selected > 2 )); then
-      selected=( $(printf '%s\n' "${selected[*]:1}" ${selected:2} |
+      selected=( $(printf '%s\n' "${selected[*]:1}" ${${selected:2}//'\\n'} |
         FZF_DEFAULT_OPTS="$fzf_default_opts" $(__fzfcmd)) )
 
       ret=$?
       zle reset-prompt
 
       if [ -n "$selected" ]; then
-        BUFFER="$BUFFER$selected"
-        CURSOR=$#BUFFER
+        selected=${selected//\\n/$'\n'}
+        BUFFER=$LBUFFER$selected$RBUFFER
+        CURSOR=$(( $#LBUFFER + $#selected ))
       fi
     fi
   fi
