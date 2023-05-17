@@ -21,7 +21,7 @@ handle_file_extensions() {
 
     case "${file_extension}" in
         ## Text
-        build|c|cpp|go|h|hpp|java|log|md|py|sh|txt)
+        build|c|cpp|go|h|hpp|java|log|md|py|sh|txt|patch)
             exec_or_fail bat --style=numbers --color=always \
                 --line-range=:200 "${file_path}" && return 0
             ;;
