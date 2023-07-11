@@ -2,38 +2,61 @@
 """"""""""""""""""""""""""""""""""""""
 call plug#begin('~/.local/share/nvim/plugged')
 
-Plug 'Shougo/deoplete.nvim'              " autocompletion framework
-Plug 'deoplete-plugins/deoplete-clang'   " deoplete provider for C/C++
+Plug 'github/copilot.vim'                " github suggestions
+Plug 'ms-jpq/coq_nvim', {'branch': 'coq'}
+Plug 'ms-jpq/coq.artifacts', {'branch': 'artifacts'}
+Plug 'ms-jpq/coq.thirdparty', {'branch': '3p'}
+"Plug 'deoplete-plugins/deoplete-clang'   " deoplete provider for C/C++
+"Plug 'Shougo/deoplete.nvim'              " autocompletion framework
 Plug 'junegunn/fzf'                      " fzf integration
 Plug 'junegunn/fzf.vim'                  " fzf integration
 Plug 'junegunn/goyo.vim'                 " distraction free mode
 Plug 'sainnhe/gruvbox-material'          " colorscheme
-"Plug 'dracula/vim', { 'as': 'dracula' }  " colorscheme
-"Plug 'EdenEast/nightfox.nvim'            " colorscheme
-"Plug 'joshdick/onedark.vim'              " colorscheme
-Plug 'Yggdroot/indentLine'               " draw indent guides (not so good)
-Plug 'itchyny/lightline.vim'             " status bar
-Plug 'mengelbrecht/lightline-bufferline' " lightline top bar plugin
-Plug 'junegunn/limelight.vim'            " text color dimmer (used with goyo)
-Plug 'neomake/neomake'                   " code linting
-Plug 'SirVer/ultisnips'                  " snippets framework
-Plug 'honza/vim-snippets'                " ultisnips provider
-"Plug 'ludovicchabant/vim-gutentags'      " ctags auto generator
 "Plug 'skywind3000/gutentags_plus'        " cscope useful shortcuts
-Plug 'szw/vim-maximizer'                 " tmux C-z
-Plug 'mg979/vim-visual-multi'            " sublime like multi cursors
-Plug 'lervag/vimtex'                     " LaTeX integration
-Plug 'justinmk/vim-sneak'                " quick cursor jump around
-Plug 'ryanoasis/vim-devicons'            " file type icons
-Plug 'vimwiki/vimwiki'
-"Plug 'amix/vim-zenroom2'                 " .md colorscheme when goyo is on
+Plug 'Yggdroot/indentLine'               " draw indent guides (not so good)
+"Plug 'jbyuki/instant.nvim'               " pair programming
+Plug 'mengelbrecht/lightline-bufferline' " lightline top bar plugin
+Plug 'itchyny/lightline.vim'             " status bar
+Plug 'junegunn/limelight.vim'            " text color dimmer (used with goyo)
 "Plug 'iamcco/markdown-preview.nvim'      " web browser .md preview
+"Plug 'neomake/neomake'                   " code linting
+"Plug 'EdenEast/nightfox.nvim'            " colorscheme
+Plug 'neovim/nvim-lspconfig'
+"Plug 'joshdick/onedark.vim'              " colorscheme
+"Plug 'SirVer/ultisnips'                  " snippets framework
+"Plug 'dracula/vim', { 'as': 'dracula' }  " colorscheme
+Plug 'ryanoasis/vim-devicons'            " file type icons
+"Plug 'ludovicchabant/vim-gutentags'      " ctags auto generator
+Plug 'szw/vim-maximizer'                 " tmux C-z
+Plug 'justinmk/vim-sneak'                " quick cursor jump around
+"Plug 'honza/vim-snippets'                " ultisnips provider
+Plug 'mg979/vim-visual-multi'            " sublime like multi cursors
+"Plug 'amix/vim-zenroom2'                 " .md colorscheme when goyo is on
+Plug 'lervag/vimtex'                     " LaTeX integration
+Plug 'vimwiki/vimwiki'
 "Plug 'Valloric/YouCompleteMe'            " autocompletion
 
 call plug#end()
 """"""""""""""""""""""""""""""""""""""
 "           PLUGINS CONFIG {{{1
 """"""""""""""""""""""""""""""""""""""
+">----| copilot {{{2
+" enable copilot only for certain filetypes
+let g:copilot_filetypes = {
+  \ '*': v:false,
+  \ 'python': v:true,
+  \ 'c': v:true,
+  \ 'cpp': v:true,
+  \ 'go': v:true,
+  \ 'vim': v:true,
+  \ }
+
+">----| coq_nvim {{{2
+let g:coq_settings = {
+  \ 'clients.tmux.enabled': v:false,
+  \ 'auto_start': 'shut-up',
+  \ }
+
 ">----| deoplete {{{2
 " use deoplete
 let g:deoplete#enable_at_startup = 1
@@ -90,7 +113,7 @@ command! -bang -nargs=? -complete=dir Files
 "   \ call fzf#vim#grep(
 "   \   "rg --column --line-number --no-heading --color=always --smart-case --glob '!.git/**' ".shellescape(<q-args>), 1,
 
- " Make Ripgrep ONLY search file contents and not filenames
+" Make Ripgrep ONLY search file contents and not filenames
 command! -bang -nargs=* Rg
   \ call fzf#vim#grep(
   \   'rg --column --line-number --hidden --smart-case --no-heading --color=always '.shellescape(<q-args>), 1,
@@ -119,6 +142,9 @@ command! -bang -nargs=* GGrep
 let g:indentLine_char='┆'
 let g:indentLine_first_char='┆'
 let g:indentLine_showFirstIndentLevel=1
+
+">----| instant {{{2
+let g:instant_username='fred'
 
 ">----| lightline-bufferline {{{2
 let g:lightline#bufferline#show_number=1
@@ -149,6 +175,8 @@ let g:lightline = {
   \     'windowNumber': 'winnr',
   \     'windowMaximized': 'IsMaximized',
   \     'tabStatus': 'TabStatus',
+  \     'modified': 'LightlineModified',
+  \     'readonly': 'LightlineReadonly',
   \   },
   \   'component_raw': {
   \     'buffers': 1
@@ -161,34 +189,57 @@ let g:lightline = {
   \   },
   \ }
 
+function! LightlineReadonly()
+  return &readonly ? '' : ''
+endfunction
+
+function! LightlineModified()
+  return &modified ? '' : ''
+endfunction
+
+function! IsMaximized()
+  if exists('t:maximizer_sizes') && t:maximizer_sizes.after == winrestcmd()
+    return ''
+  else
+    return ''
+  endif
+endfunction
+
+function! TabStatus()
+  return tabpagenr() . '/' . tabpagenr("$")
+endfunction
+
 ">----| limelight {{{2
 autocmd! User GoyoEnter Limelight 0.8
 autocmd! User GoyoLeave Limelight!
 
 ">----| neomake {{{2
-" on changes in normal mode and when writing
-" to a buffer, after 500ms of delay
-call neomake#configure#automake('nw', 500)
-" open quickfix/location list window when error is detected
-let g:neomake_open_list = 2
-" use gcc for C linting
-let g:neomake_c_enabled_makers = ['gcc']
-" disable linting on TeX files
-let g:neomake_tex_enabled_makers = []
-let g:neomake_error_sign = {
-    \ 'text': '>>',
-    \ 'texthl': 'ErrorMsg',
-    \ }
-let g:neomake_warning_sign = {
-    \   'text': '‼',
-    \   'texthl': 'WarningMsg',
-    \ }
+"" on changes in normal mode and when writing
+"" to a buffer, after 500ms of delay
+"call neomake#configure#automake('nw', 500)
+"" open quickfix/location list window when error is detected
+"let g:neomake_open_list = 2
+"" use gcc for C linting
+"let g:neomake_c_enabled_makers = ['gcc']
+"" disable linting on TeX files
+"let g:neomake_tex_enabled_makers = []
+"let g:neomake_error_sign = {
+"    \ 'text': '>>',
+"    \ 'texthl': 'ErrorMsg',
+"    \ }
+"let g:neomake_warning_sign = {
+"    \   'text': '‼',
+"    \   'texthl': 'WarningMsg',
+"    \ }
+
+">----| nvim-lspconfig {{{2
+luafile ~/.config/nvim/lsp.lua
 
 ">----| tag {{{2
 let g:gutentags_enabled=0
 
 ">----| ultilsnips {{{2
-let g:UltiSnipsExpandTrigger="<Tab>"
+let g:UltiSnipsExpandTrigger="<CR>"
 let g:UltiSnipsJumpForwardTrigger="<Tab>"
 let g:UltiSnipsJumpBackwardTrigger="<S-Tab>"
 
@@ -243,6 +294,9 @@ set colorcolumn=80
 " window scroll margin
 set scrolloff=3
 
+" search with smart case sensitiveness
+set smartcase
+
 " indent using 2 spaces
 set expandtab     " convert TAB into spaces
 set smarttab      " TAB respects 'tabstop', 'shiftwidth', and 'softtabstop'
@@ -290,6 +344,9 @@ set hidden
 " don't warn about unsaved buffers when executing terminal command
 set nowarn
 
+" disable modeline to prevent misdetections
+set nomodeline
+
 " set all .tex files' filetype to latex
 let g:tex_flavor = "latex"
 
@@ -302,7 +359,7 @@ let g:indentLine_conceallevel=2
 " per file config
 au FileType tex,markdown,vimwiki set textwidth=68
 "au FileType vimwiki UltiSnipsAddFiletypes markdown
-au BufReadPre init.vim,.zshrc set foldmethod=marker
+au BufReadPre init.vim,.zshrc,.tmux.conf set foldmethod=marker
 au BufNewFile,BufRead *.neomuttrc,*.muttrc setfiletype neomuttrc
 
 " set vertical split and fold characters
@@ -349,9 +406,10 @@ inoremap <C-d> <Del>
 " ctrl-k cut from cursor to end of line in insert
 inoremap <C-k> <space><Esc>C
 
-" ctrl-a and ctrl-e move to beginning/end of line
-inoremap <C-a> <Esc>I
-inoremap <C-e> <Esc>A
+" ctrl-a move to beginning of line and ctrl-e to
+" accept copilot suggestions or move to end of line
+inoremap <C-a> <Home>
+imap <silent><script><expr> <C-e> copilot#Accept("\<End>")
 
 " set exit terminal mode to esc key
 " tnoremap <Esc> <C-\><C-n>
@@ -427,15 +485,6 @@ function! s:ToggleList(listType)
   endif
 endfunction
 " }}}
-">----| function IsMaximized() {{{
-function! IsMaximized()
-  if exists('t:maximizer_sizes') && t:maximizer_sizes.after == winrestcmd()
-    return 'Z'
-  else
-    return ''
-  endif
-endfunction
-" }}}
 ">----| function MyFiletype() {{{
 function! MyFiletype()
   return winwidth(0) > 70 ? (strlen(&filetype) ? &filetype . ' ' . WebDevIconsGetFileTypeSymbol() : 'no ft') : ''
@@ -444,11 +493,6 @@ endfunction
 ">----| function MyFileformat() {{{
 function! MyFileformat()
   return winwidth(0) > 70 ? (&fileformat . ' ' . WebDevIconsGetFileFormatSymbol()) : ''
-endfunction
-" }}}
-">----| function TabStatus() {{{
-function! TabStatus()
-  return tabpagenr() . '/' . tabpagenr("$")
 endfunction
 " }}}
 """"""""""""""""""""""""""""""""""""""
@@ -474,3 +518,6 @@ hi DiffChange   gui=none    guifg=#ffffff       guibg=#404040
 hi DiffDelete   gui=bold    guifg=#ffcccc       guibg=#d06480
 hi DiffText     gui=none    guifg=#ffffcc       guibg=#e08070
 """"""""""""""""""""""""""""""""""""""
+
+" github copilot complete with TAB
+inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
