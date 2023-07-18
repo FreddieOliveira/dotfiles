@@ -29,7 +29,7 @@ function multi_replace() {
   printf '\033[4 q'
 }
 
-# put the cursor in beam shape
+# put the cursor in I-beam shape
 function fix_cursor() {
   printf '\033[6 q'
 }
@@ -105,8 +105,8 @@ function vim_sneak_forward() {
   read -k 2 match
 
   # non greedy match
-  if [[ $RBUFFER =~ [^${match[1]}]$match ]] && (( $MEND > 2 )); then
-    CURSOR=$(( CURSOR + MEND - 2 ))
+  if [[ ${RBUFFER:1} =~ $match ]]; then
+    CURSOR=$(( CURSOR + MEND - 1 ))
     return 0
   fi
 
