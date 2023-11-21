@@ -1,4 +1,4 @@
 #!/bin/bash
 
-exec /data/data/com.termux/files/usr/bin/less --mouse "$@"
+command -p less --mouse "$@"
 
