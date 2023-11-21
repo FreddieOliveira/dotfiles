@@ -177,8 +177,9 @@ fi
 
 alias lsblk='lsblk -o NAME,TYPE,FSTYPE,MOUNTPOINT,SIZE,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID,LABEL'
 
-# make F1-F12 keys work inside htop
-alias htop='TERM=linux htop'
+# htop and ngrok don't like the tmux-256color TERM
+alias htop='TERM=xterm-256color htop'
+alias ngrok='TERM=xterm-256color ngrok'
 
 # useful apt commands with fzf
 alias add="apt-cache search . | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {} 2>/dev/null; dpkg-query -L {} 2>&1 | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev/* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -ro pkg install"
@@ -238,7 +239,7 @@ fzf-history-widget() { # {{{
 
   setopt localoptions noglobsubst noposixbuiltins pipefail no_aliases 2> /dev/null
 
-  fzf_default_opts="--height ${FZF_TMUX_HEIGHT:-40%} $FZF_DEFAULT_OPTS -n2..,.. --tiebreak=index --bind=ctrl-r:toggle-sort,ctrl-z:ignore $FZF_CTRL_R_OPTS +m"
+  fzf_default_opts="--height ${FZF_TMUX_HEIGHT:-40%} $FZF_DEFAULT_OPTS -n2..,.. --tiebreak=index --bind=ctrl-r:toggle-sort,ctrl-z:ignore $FZF_CTRL_R_OPTS -m"
 
   selected=( $(fc -rl 1 |
     perl -ne 'print if !$seen{(/^\s*[0-9]+\**\s+(.*)/, $1)}++' |
