@@ -83,7 +83,7 @@ let g:fzf_tags_command = 'ctags -R'
 let g:fzf_layout = {'up':'~90%', 'window': { 'width': 0.8, 'height': 0.8,'yoffset':0.5,'xoffset': 0.5, 'highlight': 'float', 'border': 'sharp' } }
 let g:fzf_preview_window = 'down:60%'
 
-let $FZF_DEFAULT_OPTS = '--cycle --preview-window=down:60%:wrap:hidden --preview="preview.sh {}" --bind=ctrl-space:toggle-preview --layout=reverse --inline-info'
+let $FZF_DEFAULT_OPTS = '--cycle --preview-window=down:60%:nowrap:hidden --preview="preview.sh {}" --bind=ctrl-space:toggle-preview --layout=reverse --inline-info'
 let $FZF_DEFAULT_COMMAND="rg --files --hidden --glob '!.git/**'"
 "-g '!{node_modules,.git}'
 
@@ -411,6 +411,10 @@ inoremap <C-k> <space><Esc>C
 inoremap <C-a> <Home>
 imap <silent><script><expr> <C-e> copilot#Accept("\<End>")
 
+" alt-f and alt-b to move forward and backward one word
+inoremap <A-f> <C-Right>
+inoremap <A-b> <C-Left>
+
 " set exit terminal mode to esc key
 " tnoremap <Esc> <C-\><C-n>
 
@@ -452,6 +456,9 @@ nnoremap <leader>fl :BLines<CR>
 nnoremap <leader>fL :Lines<CR>
 nnoremap <leader>fm :Marks<CR>
 nnoremap <leader>ft :Tags<CR>
+
+" use TAB to select next item in popup menu
+inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
 """"""""""""""""""""""""""""""""""""""
 "            FUNCTIONS {{{1
 """"""""""""""""""""""""""""""""""""""
@@ -519,5 +526,3 @@ hi DiffDelete   gui=bold    guifg=#ffcccc       guibg=#d06480
 hi DiffText     gui=none    guifg=#ffffcc       guibg=#e08070
 """"""""""""""""""""""""""""""""""""""
 
-" github copilot complete with TAB
-inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
