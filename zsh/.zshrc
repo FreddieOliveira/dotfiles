@@ -251,19 +251,18 @@ fzf-history-widget() { # {{{
   if [ -n "$selected" ]; then
     # If the command doesn't have any arguments
     if (( $#selected == 2 )); then
-      selected=${${selected:1}//\\n/$'\n'}
+      selected=${selected[2]}
       BUFFER=$LBUFFER$selected$RBUFFER
       CURSOR=$(( $#LBUFFER + $#selected ))
     # If the command has at least one arguments
     elif (( $#selected > 2 )); then
-      selected=( $(printf '%s\n' "${selected[*]:1}" ${${selected:2}//'\\n'} |
-        FZF_DEFAULT_OPTS="$fzf_default_opts" $(__fzfcmd)) )
+      selected=$(printf '%s\n' "${selected[*]:1}" ${selected:2} |
+        FZF_DEFAULT_OPTS="$fzf_default_opts" $(__fzfcmd))
 
       ret=$?
       zle reset-prompt
 
       if [ -n "$selected" ]; then
-        selected=${selected//\\n/$'\n'}
         BUFFER=$LBUFFER$selected$RBUFFER
         CURSOR=$(( $#LBUFFER + $#selected ))
       fi
