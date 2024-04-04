@@ -23,8 +23,9 @@ PERL_MM_OPT="INSTALL_BASE=/data/data/com.termux/files/home/perl5"; export PERL_M
 #########################################################
 #              GLOBAL OH-MY-ZSH SETTINGS {{{1
 #########################################################
-ENABLE_CORRECTION="true"
 COMPLETION_WAITING_DOTS="true"
+DISABLE_MAGIC_FUNCTIONS="true"
+ENABLE_CORRECTION="true"
 HIST_STAMPS="dd.mm.yyyy"
 #########################################################
 #                  THEME DEFINITION {{{1
@@ -145,13 +146,12 @@ if which dircolors >/dev/null; then
 fi
 
 # some more ls aliases
-alias ll='ls -alFh'
-alias la='ls -A'
-
 if which exa >/dev/null; then
   alias l='exa --icons --group-directories-first --all'
+  alias ll='exa --icons --group-directories-first --all --all --long --group --classify'
 else
-  alias l='ls -CF'
+  alias l='ls -A'
+  alias ll='ls -alFh'
 fi
 
 # system clipboard copy and paste
@@ -246,28 +246,28 @@ fzf-history-widget() { # {{{
     FZF_DEFAULT_OPTS="${fzf_default_opts//--keep-right/}" $(__fzfcmd)) )
 
   ret=$?
-  zle reset-prompt
 
   if [ -n "$selected" ]; then
     # If the command doesn't have any arguments
     if (( $#selected == 2 )); then
-      selected=${selected[2]}
-      BUFFER=$LBUFFER$selected$RBUFFER
+      BUFFER=$LBUFFER${selected[2]}$RBUFFER
       CURSOR=$(( $#LBUFFER + $#selected ))
-    # If the command has at least one arguments
+    # If the command has at least one argument
     elif (( $#selected > 2 )); then
-      selected=$(printf '%s\n' "${selected[*]:1}" ${selected:2} |
+      zle reset-prompt
+      selected=$(printf '%s\n' "${selected[*]:1}" ${${selected:2}//'\\n'} |
         FZF_DEFAULT_OPTS="$fzf_default_opts" $(__fzfcmd))
 
       ret=$?
-      zle reset-prompt
 
       if [ -n "$selected" ]; then
-        BUFFER=$LBUFFER$selected$RBUFFER
+        BUFFER=$LBUFFER${selected//\\n/$'\n'}$RBUFFER
         CURSOR=$(( $#LBUFFER + $#selected ))
       fi
     fi
   fi
+
+  zle reset-prompt
 
   return $ret
 } # }}}
