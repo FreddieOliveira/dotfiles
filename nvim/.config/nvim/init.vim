@@ -14,6 +14,7 @@ Plug 'junegunn/goyo.vim'                 " distraction free mode
 Plug 'sainnhe/gruvbox-material'          " colorscheme
 "Plug 'skywind3000/gutentags_plus'        " cscope useful shortcuts
 Plug 'Yggdroot/indentLine'               " draw indent guides (not so good)
+"Plug 'lukas-reineke/indent-blankline.nvim'               " draw indent guides
 "Plug 'jbyuki/instant.nvim'               " pair programming
 Plug 'mengelbrecht/lightline-bufferline' " lightline top bar plugin
 Plug 'itchyny/lightline.vim'             " status bar
@@ -137,6 +138,34 @@ command! -bang -nargs=* GGrep
   \ call fzf#vim#grep(
   \   'git grep --line-number '.shellescape(<q-args>), 0,
   \   fzf#vim#with_preview({'dir': systemlist('git rev-parse --show-toplevel')[0]}), <bang>0)
+
+">----| indent-blankline {{{2
+"lua << EOF
+"local highlight = {
+"    "RainbowRed",
+"    "RainbowBlue",
+"    "RainbowOrange",
+"    "RainbowGreen",
+"    "RainbowViolet",
+"    "RainbowYellow",
+"    "RainbowCyan",
+"}
+"
+"local hooks = require "ibl.hooks"
+"-- create the highlight groups in the highlight setup hook, so they are reset
+"-- every time the colorscheme changes
+"hooks.register(hooks.type.HIGHLIGHT_SETUP, function()
+"    vim.api.nvim_set_hl(0, "RainbowRed", { fg = "#E06C75" })
+"    vim.api.nvim_set_hl(0, "RainbowBlue", { fg = "#61AFEF" })
+"    vim.api.nvim_set_hl(0, "RainbowOrange", { fg = "#D19A66" })
+"    vim.api.nvim_set_hl(0, "RainbowGreen", { fg = "#98C379" })
+"    vim.api.nvim_set_hl(0, "RainbowViolet", { fg = "#C678DD" })
+"    vim.api.nvim_set_hl(0, "RainbowYellow", { fg = "#E5C07B" })
+"    vim.api.nvim_set_hl(0, "RainbowCyan", { fg = "#56B6C2" })
+"end)
+"
+"require("ibl").setup { indent = { highlight = highlight } }
+"EOF
 
 ">----| indentline {{{2
 let g:indentLine_char='┆'
@@ -295,6 +324,7 @@ set colorcolumn=80
 set scrolloff=3
 
 " search with smart case sensitiveness
+set ignorecase
 set smartcase
 
 " indent using 2 spaces
