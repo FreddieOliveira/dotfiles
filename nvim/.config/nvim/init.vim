@@ -8,7 +8,7 @@ Plug 'ms-jpq/coq.artifacts', {'branch': 'artifacts'}
 Plug 'ms-jpq/coq.thirdparty', {'branch': '3p'}
 "Plug 'deoplete-plugins/deoplete-clang'   " deoplete provider for C/C++
 "Plug 'Shougo/deoplete.nvim'              " autocompletion framework
-Plug 'junegunn/fzf'                      " fzf integration
+"Plug 'junegunn/fzf'                      " fzf integration
 Plug 'junegunn/fzf.vim'                  " fzf integration
 Plug 'junegunn/goyo.vim'                 " distraction free mode
 Plug 'sainnhe/gruvbox-material'          " colorscheme
@@ -56,6 +56,7 @@ let g:copilot_filetypes = {
 let g:coq_settings = {
   \ 'clients.tmux.enabled': v:false,
   \ 'auto_start': 'shut-up',
+  \ 'keymap.recommended': v:false
   \ }
 
 ">----| deoplete {{{2
@@ -81,7 +82,7 @@ let g:fzf_history_dir = '~/.local/share/fzf-history'
 let g:fzf_buffers_jump = 1
 let g:fzf_tags_command = 'ctags -R'
 " Border color
-let g:fzf_layout = {'up':'~90%', 'window': { 'width': 0.8, 'height': 0.8,'yoffset':0.5,'xoffset': 0.5, 'highlight': 'float', 'border': 'sharp' } }
+let g:fzf_layout = {'up':'~90%', 'window': { 'width': 0.8, 'height': 0.8,'yoffset':0.5,'xoffset': 0.5, 'highlight': 'float', 'border': 'rounded' } }
 let g:fzf_preview_window = 'down:60%'
 
 let $FZF_DEFAULT_OPTS = '--cycle --preview-window=down:60%:nowrap:hidden --preview="preview.sh {}" --bind=ctrl-space:toggle-preview --layout=reverse --inline-info'
@@ -286,14 +287,16 @@ let g:UltiSnipsJumpBackwardTrigger="<S-Tab>"
 let g:sneak#label = 1
 
 ">----| vimwiki {{{2
+let g:vimwiki_autowriteall = 0
 let g:vimwiki_list = [{
   \ 'syntax': 'markdown',
   \ 'ext': '.md',
   \ 'index': '_index',
-  \ 'path': '/sdcard/Documents/vimwiki/content',
+  \ 'path': '/sdcard/Documents/vimwiki/content/docs',
   \ 'path_html': '/sdcard/Documents/vimwiki/_site',
   \ 'template_ext': '.html',
   \ 'template_path': '/sdcard/Documents/vimwiki/templates/',
+  \ 'auto_diary_index': 1
   \ }]
 
 let g:vimwiki_diary_months = {
@@ -356,11 +359,6 @@ set hlsearch  " highlight matches
 set wmh=0
 set wmw=0
 
-" folding code
-set foldenable
-set foldmethod=indent " fold based on indent level
-set foldlevel=0       " starting fold depth
-
 " open splits towards the bottom right corner
 set splitbelow
 set splitright
@@ -389,8 +387,17 @@ let g:indentLine_conceallevel=2
 " per file config
 au FileType tex,markdown,vimwiki set textwidth=68
 "au FileType vimwiki UltiSnipsAddFiletypes markdown
-au BufReadPre init.vim,.zshrc,.tmux.conf set foldmethod=marker
+au BufReadPre *.*
+  \ setlocal foldenable foldmethod=indent foldlevel=0
+au BufReadPre init.vim,.zshrc,.tmux.conf
+  \ setlocal foldenable foldmethod=marker foldlevel=0
 au BufNewFile,BufRead *.neomuttrc,*.muttrc setfiletype neomuttrc
+
+" restore last cursors position when opening a buffer
+au BufReadPost *
+  \   if line("'\"") > 1 && line("'\"") <= line("$")
+  \ |   exe "normal! g'\""
+  \ | endif
 
 " set vertical split and fold characters
 set fillchars=vert:\ ,fold:-
@@ -399,9 +406,6 @@ set fillchars=vert:\ ,fold:-
 set list
 set listchars=tab:→\ ,trail:⋅,extends:❯,precedes:❮
 set showbreak=↪
-
-" restore last cursors position when opening a buffer
-au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 """"""""""""""""""""""""""""""""""""""
 "           KEYBINDINGS {{{1
 """"""""""""""""""""""""""""""""""""""
@@ -433,27 +437,44 @@ noremap <C-k> 3<C-y>
 " del in insert mode
 inoremap <C-d> <Del>
 
-" ctrl-k cut from cursor to end of line in insert
-inoremap <C-k> <space><Esc>C
+" ctrl-u cut from cursor to beginning of line in insert mode
+inoremap <C-u> <space><Esc>d0a<Backspace>
+
+" ctrl-k cut from cursor to end of line in insert mode
+inoremap <C-k> <C-o>D
+
+" alt-d cut next word in insert mode
+"inoremap <A-d> <C-o>de
+inoremap <A-d> <space><ESC>lce<Backspace>
+
+" ctrl-w cut previous word in insert mode
+inoremap <C-w> <space><Esc>cb<Del>
+
+" ctrl-y yank in insert mode
+inoremap <C-y> <space><Left><C-o>P<Del>
 
 " ctrl-a move to beginning of line and ctrl-e to
 " accept copilot suggestions or move to end of line
 inoremap <C-a> <Home>
-imap <silent><script><expr> <C-e> copilot#Accept("\<End>")
+imap <silent><script><expr> <C-e> copilot#Accept('<End>')
 
 " alt-f and alt-b to move forward and backward one word
 inoremap <A-f> <C-Right>
 inoremap <A-b> <C-Left>
+
+" crtl-f and crtl-b to move forward and backward one character
+inoremap <C-f> <Right>
+inoremap <C-b> <Left>
 
 " set exit terminal mode to esc key
 " tnoremap <Esc> <C-\><C-n>
 
 " ctags
 " open the definition in a vertical split
-map <C-w><A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>
+map <C-w><A-]> :vsp <CR>:exec('tag '.expand('<cword>'))<CR>
 
 " activate goyo with \z
-nnoremap <silent> <leader>z <:Goyo<CR>:!tmux set -g status<CR><CR>
+nnoremap <silent> <leader>z :Goyo<CR>:!tmux set -g status<CR><CR>
 
 nnoremap <silent>  <leader>tl :call <SID>ToggleList('location')<CR>
 nnoremap <silent>  <leader>tq :call <SID>ToggleList('quickfix')<CR>
@@ -487,8 +508,12 @@ nnoremap <leader>fL :Lines<CR>
 nnoremap <leader>fm :Marks<CR>
 nnoremap <leader>ft :Tags<CR>
 
-" use TAB to select next item in popup menu
-inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
+" use TAB and Shift TAB to move to next and previous item in popup menu
+inoremap <silent><expr> <Tab>   pumvisible() ? '<Down>' : '<Tab>'
+inoremap <silent><expr> <S-Tab> pumvisible() ? '<Up>' : '<BS>'
+
+" use Enter to accept current item in popup menu
+inoremap <silent><expr> <CR> pumvisible() ? (complete_info().selected == -1 ? '<C-e><CR>' : '<C-y>') : '<CR>'
 """"""""""""""""""""""""""""""""""""""
 "            FUNCTIONS {{{1
 """"""""""""""""""""""""""""""""""""""
