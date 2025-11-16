@@ -1,6 +1,6 @@
 -- Setup language servers.
 local lspconfig = require('lspconfig')
---local coq = require('coq')
+local coq = require('coq')
 
 require("coq_3p") {
   { src = "copilot", short_name = "COP", accept_key = "<c-e>" },
@@ -52,14 +52,27 @@ vim.api.nvim_create_autocmd('LspAttach', {
   end,
 })
 
-local signs = {
-  Error = "",
-  Warn = "",
-  Hint = "", -- 
-  Info = "",
- }
+-- Enable inline diagnostic description
+vim.diagnostic.config({ virtual_text = true })
 
- for type, icon in pairs(signs) do
-  local hl = "DiagnosticSign" .. type
-  vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
- end
+-- Enable ??? (not sure what)
+vim.lsp.inlay_hint.enable(true, { 0 })
+
+-- Define diagnostic icons to be displayed on lateral bar
+vim.diagnostic.config({
+  signs = {
+    text = {
+      [vim.diagnostic.severity.ERROR] = " ",
+      [vim.diagnostic.severity.WARN] = " ",
+      [vim.diagnostic.severity.INFO] = " ", -- 󰋼
+      [vim.diagnostic.severity.HINT] = " ", -- 
+    },
+    numhl = {
+      [vim.diagnostic.severity.ERROR] = "",
+      [vim.diagnostic.severity.WARN] = "",
+      [vim.diagnostic.severity.HINT] = "",
+      [vim.diagnostic.severity.INFO] = "",
+    },
+  },
+})
+
