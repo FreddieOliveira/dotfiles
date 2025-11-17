@@ -8,18 +8,17 @@ else
 fi
 export DISPLAY=:1
 export EDITOR='nvim'
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/perl5/bin:$PATH"
+export MANPATH="$HOME/.local/man:$MANPATH"
 export ZSH="$HOME/.oh-my-zsh"
-export FZF_DEFAULT_OPTS="--height=75% --layout=reverse --tiebreak=begin --preview-window=down:80%:wrap:hidden --cycle --preview='preview.sh {}' --bind=ctrl-space:toggle-preview --hscroll-off=999 --keep-right"
-# export MANPATH="/usr/local/man:$MANPATH"
+export FZF_DEFAULT_OPTS="--height=75% --layout=reverse --exact --tiebreak=chunk,index --preview-window=down:80%:wrap:hidden --cycle --preview='preview.sh {}' --bind=ctrl-space:toggle-preview --hscroll-off=999 --keep-right"
 # export LANG='pt_BR.UTF-8'
 # export LC_CTYPE='pt_BR.UTF-8'
 # export LC_ALL='pt_BR.UTF-8'
-PATH="/data/data/com.termux/files/home/perl5/bin${PATH:+:${PATH}}"; export PATH;
-PERL5LIB="/data/data/com.termux/files/home/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
-PERL_LOCAL_LIB_ROOT="/data/data/com.termux/files/home/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
-PERL_MB_OPT="--install_base \"/data/data/com.termux/files/home/perl5\""; export PERL_MB_OPT;
-PERL_MM_OPT="INSTALL_BASE=/data/data/com.termux/files/home/perl5"; export PERL_MM_OPT;
+export PERL5LIB="$HOME/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"
+export PERL_LOCAL_LIB_ROOT="$HOME/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"
+export PERL_MB_OPT="--install_base \"$HOME/perl5\""
+export PERL_MM_OPT="INSTALL_BASE=$HOME/perl5"
 #########################################################
 #              GLOBAL OH-MY-ZSH SETTINGS {{{1
 #########################################################
@@ -113,6 +112,7 @@ ZSH_TMUX_AUTOQUIT="false"
 plugins=(
     tmux
     fasd # enable fasd if it's installed
+    #safe-paste
     vi-mode # be sure to put this before fzf
     fzf # enable fzf if its installed
     fzf-tab # enable fzf when hitting TAB
@@ -142,13 +142,13 @@ if which dircolors >/dev/null; then
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
-    alias exa='exa --color=automatic'
+    alias eza='eza --color=automatic'
 fi
 
 # some more ls aliases
-if which exa >/dev/null; then
-  alias l='exa --icons --group-directories-first --all'
-  alias ll='exa --icons --group-directories-first --all --all --long --group --classify'
+if which eza >/dev/null; then
+  alias l='eza --icons --group-directories-first --all'
+  alias ll='eza --icons --group-directories-first --long --group --classify --all'
 else
   alias l='ls -A'
   alias ll='ls -alFh'
@@ -183,7 +183,7 @@ alias ngrok='TERM=xterm-256color ngrok'
 
 # useful apt commands with fzf
 alias add="apt-cache search . | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {} 2>/dev/null; dpkg-query -L {} 2>&1 | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev/* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -ro pkg install"
-alias del="dpkg-query --no-pager -W -f='\${binary:Package}\n' | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {} 2>/dev/null; dpkg-query -L {} | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev/* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -ro apt purge"
+alias del="dpkg-query --no-pager -W -f='\${binary:Package}\n' | cut -d' ' -f1 | fzf --layout=reverse -m --cycle --height=65% --preview-window=down:75%:wrap:hidden --preview='apt show {}=\$(dpkg-query --show {} | cut -f2) 2>/dev/null; dpkg-query -L {} | sort | tail -n +2 | while read cur; do [[ \$cur != \$prev/* ]] && echo \$prev; prev=\$cur; done; echo \$prev;' | xargs -ro apt purge"
 #########################################################
 #                 FUNCTIONS DEFINITIONS {{{1
 #########################################################
@@ -228,7 +228,7 @@ function cp_clipbrd_widget() { # {{{
   fi
 
   # copy the selection using the clipboard program aliased above
-  printf $BUFFER[$(( start_pos + 1 )),$(( end_pos + 1 ))] | cp-clipbrd
+  printf '%s' "$BUFFER[$(( start_pos + 1 )),$(( end_pos + 1 ))]" | cp-clipbrd
 } # }}}
 zle -N cp_clipbrd_widget
 
@@ -239,23 +239,24 @@ fzf-history-widget() { # {{{
 
   setopt localoptions noglobsubst noposixbuiltins pipefail no_aliases 2> /dev/null
 
-  fzf_default_opts="--height ${FZF_TMUX_HEIGHT:-40%} $FZF_DEFAULT_OPTS -n2..,.. --tiebreak=index --bind=ctrl-r:toggle-sort,ctrl-z:ignore $FZF_CTRL_R_OPTS -m"
+  fzf_default_opts="--height ${FZF_TMUX_HEIGHT:-40%} ${FZF_DEFAULT_OPTS//--keep-right/} -n2..,.. --exact --tiebreak=chunk,index --bind=ctrl-r:toggle-sort,ctrl-z:ignore $FZF_CTRL_R_OPTS -m"
 
-  selected=( $(fc -rl 1 |
+  # https://stackoverflow.com/questions/72371540/is-there-a-way-to-split-a-string-into-an-array-with-space-separated-values
+  selected=$(fc -rl 1 |
     perl -ne 'print if !$seen{(/^\s*[0-9]+\**\s+(.*)/, $1)}++' |
-    FZF_DEFAULT_OPTS="${fzf_default_opts//--keep-right/}" $(__fzfcmd)) )
+    FZF_DEFAULT_OPTS="$fzf_default_opts" $(__fzfcmd))
 
   ret=$?
 
   if [ -n "$selected" ]; then
     # If the command doesn't have any arguments
-    if (( $#selected == 2 )); then
-      BUFFER=$LBUFFER${selected[2]}$RBUFFER
+    if (( ${#${=selected}} == 2 )); then
+      BUFFER=$LBUFFER${${(z)selected}:1}$RBUFFER
       CURSOR=$(( $#LBUFFER + $#selected ))
     # If the command has at least one argument
-    elif (( $#selected > 2 )); then
+    elif (( ${#${=selected}} > 2 )); then
       zle reset-prompt
-      selected=$(printf '%s\n' "${selected[*]:1}" ${${selected:2}//'\\n'} |
+      selected=$(printf '%s\n' "${${(z)selected}:1}" ${${${(z)selected}:2}//'\\n'} |
         FZF_DEFAULT_OPTS="$fzf_default_opts" $(__fzfcmd))
 
       ret=$?
@@ -275,8 +276,20 @@ zle -N fzf-history-widget
 #########################################################
 #                   GENERAL CONFIGS {{{1
 #########################################################
-# enable jedi shortcuts
+# enable jedi shortcuts. For further info check man zshexpn
+# or chapter 14 Expansion of zsh documentation on
+# https://zsh.sourceforge.io/Doc/Release/Expansion.html
 setopt extendedglob
+
+# adopts the same behavior as sh when expanding variables
+# depending on it's enclosed with quotes or not
+#setopt shwordsplit
+
+# disable the bahavior of deleting suffix chars (spaces and slashes)
+# added by TAB auto completion. For further info, check
+# https://superuser.com/questions/613685
+#export ZLE_REMOVE_SUFFIX_CHARS=''
+export ZLE_SPACE_SUFFIX_CHARS=$'&|'
 
 # git diff using vim
 git config --global diff.tool vimdiff
