@@ -375,6 +375,9 @@ set nowarn
 " disable modeline to prevent misdetections
 set nomodeline
 
+" auto insert comment leader on line break
+set formatoptions+=ro
+
 " set all .tex files' filetype to latex
 let g:tex_flavor = "latex"
 
@@ -573,11 +576,14 @@ let g:gruvbox_material_background = 'medium'
 " available value: 'original', 'material'(default), 'mix'
 let g:gruvbox_material_palette = 'original'
 
-" custom highlight when using git difftool
 colorscheme gruvbox-material
+" custom highlight when using git difftool
 hi DiffAdd      gui=none    guifg=#ccffcc       guibg=#6aa966
 hi DiffChange   gui=none    guifg=#ffffff       guibg=#404040
 hi DiffDelete   gui=bold    guifg=#ffcccc       guibg=#d06480
 hi DiffText     gui=none    guifg=#ffffcc       guibg=#e08070
+" custom highlight of listchars
+hi Whitespace   gui=none    guifg=#6a635d
+hi NonText      gui=none    guifg=#6a635d
 """"""""""""""""""""""""""""""""""""""
 
