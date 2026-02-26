@@ -1,46 +1,130 @@
-#            GLOBAL ENVIRONMENT VARIABLES {{{1
+#                INITIALIZATION SETTINGS {{{1
 #########################################################
-# check if we're inside tmux
-if [[ -z "$TMUX" ]]; then
-  export TERM='xterm-256color'
-else
-  export TERM='tmux-256color'
+# Autostart tmux if not already done it
+if which tmux >/dev/null \
+  && [[ -z "$ZSH_TMUX_AUTOSTARTED" \
+  && -z "$TMUX" \
+  && -z "$INSIDE_EMACS" \
+  && -z "$EMACS" \
+  && -z "$VIM" \
+  && -z "$INTELLIJ_ENVIRONMENT_READER" \
+  && -z "$ZED_TERM" ]]; then
+    export ZSH_TMUX_AUTOSTARTED=true
+    tmux attach &>/dev/null || tmux
 fi
-export DISPLAY=:1
-export EDITOR='nvim'
+
+# Enable Powerlevel10k instant prompt. Should stay close to the top
+# of ~/.zshrc. Initialization code that may require console input
+# (password prompts, [y/n] confirmations, etc.) must go above this
+# block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+#########################################################
+#               ENVIRONMENT VARIABLES {{{1
+#########################################################
+export EDITOR=nvim
 export PATH="$HOME/.local/bin:$HOME/perl5/bin:$PATH"
-export MANPATH="$HOME/.local/man:$MANPATH"
-export ZSH="$HOME/.oh-my-zsh"
 export FZF_DEFAULT_OPTS="--height=75% --layout=reverse --exact --tiebreak=chunk,index --preview-window=down:80%:wrap:hidden --cycle --preview='preview.sh {}' --bind=ctrl-space:toggle-preview --hscroll-off=999 --keep-right"
-# export LANG='pt_BR.UTF-8'
-# export LC_CTYPE='pt_BR.UTF-8'
-# export LC_ALL='pt_BR.UTF-8'
-export PERL5LIB="$HOME/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"
-export PERL_LOCAL_LIB_ROOT="$HOME/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"
-export PERL_MB_OPT="--install_base \"$HOME/perl5\""
-export PERL_MM_OPT="INSTALL_BASE=$HOME/perl5"
+export LESS='-R --mouse --ignore-case'
+export LSCOLORS=Gxfxcxdxbxegedabagacad
+if which dircolors >/dev/null; then
+    if [[ -r ~/.dircolors ]]; then
+        eval "$(dircolors -b ~/.dircolors)"
+    else
+        eval "$(dircolors -b)"
+    fi
+fi
+# Disable the bahavior of deleting suffix chars (spaces and
+# slashes) added by TAB auto completion. For further info, check
+# https://superuser.com/questions/613685
+#export ZLE_REMOVE_SUFFIX_CHARS=''
+export ZLE_SPACE_SUFFIX_CHARS=$'&|'
 #########################################################
-#              GLOBAL OH-MY-ZSH SETTINGS {{{1
+#                    ZSH SETTINGS {{{1
 #########################################################
-COMPLETION_WAITING_DOTS="true"
-DISABLE_MAGIC_FUNCTIONS="true"
-ENABLE_CORRECTION="true"
-HIST_STAMPS="dd.mm.yyyy"
+# History configuration
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=1000000000
+SAVEHIST=1000000000
+
+setopt APPEND_HISTORY
+setopt INC_APPEND_HISTORY
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt EXTENDED_HISTORY
+setopt CORRECT  # enable command spelling correction
+setopt EXTENDEDGLOB
+
+WORDCHARS=''
+# Adopts the same behavior as sh when expanding variables
+# depending on it's enclosed with quotes or not
+#setopt shwordsplit
+# Disable sort when completing `git checkout`
+zstyle ':completion:*:git-checkout:*' sort false
+# Set descriptions format to enable group support NOTE: don't use
+# escape sequences (like '%F{red}%d%f') here, fzf-tab will ignore
+# them
+zstyle ':completion:*:descriptions' format '[%d]'
+# Set list-colors to enable filename colorizing
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+# Force zsh not to show completion menu, which allows fzf-tab to
+# capture the unambiguous prefix
+zstyle ':completion:*' menu no
+#zstyle ":completion:*" show-completer true
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zcompcache"
+# Enable completion inside /sdcard/
+zstyle ':completion:*' accept-exact-dirs true
+zstyle ':completion:*:*:*:*:processes' command "ps -u $USERNAME -o pid,user,comm -w -w"
+
+autoload -Uz compinit
+
+# Load and initialize the completion system ignoring insecure
+# directories with a cache time of 1 day
+_comp_dump="${XDG_CACHE_HOME:-$HOME/.cache}/zcompdump"
+# man zshexpn (Glob Qualifiers)
+if [[ $_comp_dump(#qNmd-1) ]]; then
+  # -C (skip function check) implies -u (skip security check).
+  compinit -C -d "$_comp_dump"
+else
+  mkdir -p "$_comp_dump:h"
+  compinit -u -d "$_comp_dump"
+  touch "$_comp_dump"
+fi
+unset _comp_dump
+
+# Execute this block in the background and disowned
+{
+  autoload -Uz zrecompile
+  _comp_dump="${XDG_CACHE_HOME:-$HOME/.cache}/zcompdump"
+
+  # Compile the completion database, plugins and .zshrc if not
+  # not already or if outdated (plain text file is more recent
+  # than compiled)
+  zrecompile -q -p "$_comp_dump" -- \
+    "$HOME/.config/zsh/vi-mode/vi-mode.plugin.zsh" -- \
+    "$HOME/.config/zsh/fzf-tab/fzf-tab.plugin.zsh" -- \
+    "$HOME/.config/zsh/fzf-tab/fzf-tab.zsh" -- \
+    "$HOME/.config/zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" -- \
+    "$HOME/.config/zsh/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh" -- \
+    "$HOME/.config/zsh/fasd/fasd.plugin.zsh" -- \
+    "$HOME/.config/zsh/powerlevel10k/powerlevel9k.zsh-theme" -- \
+    "$HOME/.zshrc"
+} &!
 #########################################################
-#                  THEME DEFINITION {{{1
+#                   PLUGINS SETTINGS {{{1
 #########################################################
-ZSH_THEME="powerlevel10k/powerlevel10k"
-#########################################################
-#                   THEME SETTINGS {{{1
-#########################################################
-POWERLEVEL9K_MODE='nerdfont-complete'
-POWERLEVEL9K_NODE_VERSION_BACKGROUND='28'
-POWERLEVEL9K_NODE_VERSION_FOREGROUND='15'
-POWERLEVEL9K_BACKGROUND_JOBS_ICON='\uF013'  # 
+#>----| powerlevel10k {{{2
+################################
+POWERLEVEL9K_MODE='nerdfont-v3'
+POWERLEVEL9K_BACKGROUND_JOBS_ICON=''
 POWERLEVEL9K_VCS_UNSTAGED_ICON='\u00b1'
 POWERLEVEL9K_VCS_INCOMING_CHANGES_ICON='\u2193'
 POWERLEVEL9K_VCS_OUTGOING_CHANGES_ICON='\u2191'
 POWERLEVEL9K_VCS_GIT_GITHUB_ICON=''
+POWERLEVEL9K_VCS_GIT_ICON=''
 POWERLEVEL9K_VCS_MODIFIED_BACKGROUND='yellow'
 POWERLEVEL9K_VCS_UNTRACKED_BACKGROUND='yellow'
 POWERLEVEL9K_STATUS_OK_BACKGROUND="black"
@@ -51,23 +135,21 @@ POWERLEVEL9K_STATUS_LEFT_LEFT_WHITESPACE=''
 POWERLEVEL9K_COMMAND_EXECUTION_TIME_FOREGROUND="black"
 POWERLEVEL9K_COMMAND_EXECUTION_TIME_BACKGROUND="yellow"
 POWERLEVEL9K_COMMAND_EXECUTION_TIME_RIGHT_SEGMENT_SEPARATOR=''
-POWERLEVEL9K_TIME_ICON='\uF017'  # 
+POWERLEVEL9K_TIME_ICON=''
 POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX='╭'
 POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX='╰─'
 POWERLEVEL9K_MULTILINE_FIRST_PROMPT_GAP_CHAR="·"
 POWERLEVEL9K_EMPTY_LINE_LEFT_PROMPT_LAST_SEGMENT_END_SYMBOL=''
 POWERLEVEL9K_LEFT_PROMPT_FIRST_SEGMENT_START_SYMBOL=''
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(status background_jobs root_indicator dir newline)
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(status virtualenv background_jobs root_indicator dir newline)
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(vcs time command_execution_time)
 POWERLEVEL9K_CHANGESET_HASH_LENGTH=6
+#POWERLEVEL9K_DIR_OMIT_FIRST_CHARACTER=true
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=2
-POWERLEVEL9K_DIR_OMIT_FIRST_CHARACTER="true"
 POWERLEVEL9K_SHORTEN_STRATEGY=truncate_folders
-POWERLEVEL9K_LEGACY_ICON_SPACING="true"
+POWERLEVEL9K_LEGACY_ICON_SPACING=true
 ZLE_RPROMPT_INDENT=0
-#########################################################
-#                   PLUGINS SETTINGS {{{1
-#########################################################
+################################
 #>----| zsh-autosuggestions {{{2
 ################################
 # widgets that accept the suggestion as far as the cursor moves
@@ -97,45 +179,27 @@ zstyle ':fzf-tab:*' fzf-flags --height=75% --bind=ctrl-space:toggle-preview,tab:
 zstyle ':fzf-tab:complete:*:*' fzf-preview 'preview.sh $realpath'
 # prevent populating fzf query. See https://github.com/Aloxaf/fzf-tab/issues/99
 #zstyle ':fzf-tab:*' query-string prefix first
-################################
-#>----| tmux {{{2
-################################
-# autostart tmux server when starting the terminal
-ZSH_TMUX_AUTOSTART="true"
-# don't close the terminal when killing tmux server
-ZSH_TMUX_AUTOQUIT="false"
+# switch group using `<` and `>`
+zstyle ':fzf-tab:*' switch-group '<' '>'
 #########################################################
 #                  PLUGINS SELECTION {{{1
 #########################################################
-# add wisely, as too many plugins slow down shell startup
-# also, be aware of the plugins order, as one may interfer with others
-plugins=(
-    tmux
-    fasd # enable fasd if it's installed
-    #safe-paste
-    vi-mode # be sure to put this before fzf
-    fzf # enable fzf if its installed
-    fzf-tab # enable fzf when hitting TAB
-    zsh-autosuggestions # suggests commands as typing based on history
-    #zsh-syntax-highlighting # colorize the current command according to its correctness
-    fast-syntax-highlighting # add real time syntax highlighting
-)
-#########################################################
-#                   OH-MY-ZSH LOADER {{{1
-#########################################################
-# this will load the theme and plugins
-source $ZSH/oh-my-zsh.sh
+# The order is important!
+source "$HOME/.config/zsh/vi-mode/vi-mode.plugin.zsh"
+eval "$(fzf --zsh)"
+source "$HOME/.config/zsh/fzf-tab/fzf-tab.plugin.zsh"
+source "$HOME/.config/zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
+source "$HOME/.config/zsh/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
+source "$HOME/.config/zsh/fasd/fasd.plugin.zsh"
+source "$HOME/.config/zsh/powerlevel10k/powerlevel9k.zsh-theme"
 #########################################################
 #                   ALIASES DEFINITIONS {{{1
 #########################################################
+alias ta='tmux attach'
+alias tl='tmux list-sessions'
+
 # colorful ls
 if which dircolors >/dev/null; then
-    if [[ -r ~/.dircolors ]]; then
-        eval "$(dircolors -b ~/.dircolors)"
-    else
-        eval "$(dircolors -b)"
-    fi
-
     alias ls='ls --color=auto'
     alias dir='dir --color=auto'
     alias vdir='vdir --color=auto'
@@ -187,51 +251,6 @@ alias del="dpkg-query --no-pager -W -f='\${binary:Package}\n' | cut -d' ' -f1 | 
 #########################################################
 #                 FUNCTIONS DEFINITIONS {{{1
 #########################################################
-# widget to copy selection to system clipboard
-# use it by selecting a region while in vim visual mode,
-# press : to enter execute mode and type cp_clipbrd_widget
-function cp_clipbrd_widget() { # {{{
-  local start_pos end_pos
-
-  if ! which cp-clipbrd >/dev/null || [[ -z $CURSOR ]]; then
-    return 1
-  fi
-
-  # if not in visual mode copy only the current char
-  if (( ${REGION_ACTIVE:-0} == 0 )); then
-    start_pos=end_pos=$CURSOR
-  elif (( $CURSOR > $MARK )); then
-    start_pos=$MARK
-    end_pos=$CURSOR
-  else
-    start_pos=$CURSOR
-    end_pos=$MARK
-  fi
-
-  # if in visual line mode, find the start and end of first and last lines
-  if (( ${REGION_ACTIVE:-0} == 2 )); then
-    local regex
-
-    # start of first line
-    regex='.*'$'\n'
-    if [[ ${BUFFER:0:$start_pos} =~ $regex ]]; then
-      start_pos=$(( MEND ))
-      else  # if regex didn't match, we're in the first line
-      start_pos=0
-    fi
-
-    # end of last line
-    regex='[^'$'\n]*'
-    if [[ ${BUFFER:$end_pos} =~ $regex ]];then
-      end_pos=$(( end_pos + MEND - 1 ))
-    fi
-  fi
-
-  # copy the selection using the clipboard program aliased above
-  printf '%s' "$BUFFER[$(( start_pos + 1 )),$(( end_pos + 1 ))]" | cp-clipbrd
-} # }}}
-zle -N cp_clipbrd_widget
-
 # Override fzf plugin's widget which is called by CTRL+r shortcut
 # (enhanced history-incremental-search-backward)
 fzf-history-widget() { # {{{
@@ -262,7 +281,7 @@ fzf-history-widget() { # {{{
       ret=$?
 
       if [ -n "$selected" ]; then
-        BUFFER=$LBUFFER${selected//\\n/$'\n'}$RBUFFER
+        BUFFER=$LBUFFER${${selected//$'\n'/ }//\\n/$'\n'}$RBUFFER
         CURSOR=$(( $#LBUFFER + $#selected ))
       fi
     fi
@@ -273,33 +292,5 @@ fzf-history-widget() { # {{{
   return $ret
 } # }}}
 zle -N fzf-history-widget
-#########################################################
-#                   GENERAL CONFIGS {{{1
-#########################################################
-# enable jedi shortcuts. For further info check man zshexpn
-# or chapter 14 Expansion of zsh documentation on
-# https://zsh.sourceforge.io/Doc/Release/Expansion.html
-setopt extendedglob
-
-# adopts the same behavior as sh when expanding variables
-# depending on it's enclosed with quotes or not
-#setopt shwordsplit
-
-# disable the bahavior of deleting suffix chars (spaces and slashes)
-# added by TAB auto completion. For further info, check
-# https://superuser.com/questions/613685
-#export ZLE_REMOVE_SUFFIX_CHARS=''
-export ZLE_SPACE_SUFFIX_CHARS=$'&|'
-
-# git diff using vim
-git config --global diff.tool vimdiff
-git config --global difftool.prompt false
-git config --global alias.d difftool
-
-# fzf-tab config that must be set at the end
-zstyle ':completion:*:descriptions' format '[%d]' # enable group support
-
-# vi keybinding that's overwriten by fzf plugin
-bindkey -M vicmd '^R' redo
 #########################################################
 

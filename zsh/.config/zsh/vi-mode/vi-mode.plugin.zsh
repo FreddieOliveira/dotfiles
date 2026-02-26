@@ -5,8 +5,53 @@
 export KEYTIMEOUT=1
 
 # start vi-mode
-#bindkey -v
-setopt vi
+bindkey -v
+#setopt vi
+
+# widget to copy selection to system clipboard
+# use it by selecting a region while in vim visual mode,
+# press : to enter execute mode and type cp_clipbrd_widget
+function cp_clipbrd_widget() { # {{{
+  local start_pos end_pos
+
+  if ! which cp-clipbrd >/dev/null || [[ -z $CURSOR ]]; then
+    return 1
+  fi
+
+  # if not in visual mode copy only the current char
+  if (( ${REGION_ACTIVE:-0} == 0 )); then
+    start_pos=end_pos=$CURSOR
+  elif (( $CURSOR > $MARK )); then
+    start_pos=$MARK
+    end_pos=$CURSOR
+  else
+    start_pos=$CURSOR
+    end_pos=$MARK
+  fi
+
+  # if in visual line mode, find the start and end of first and last lines
+  if (( ${REGION_ACTIVE:-0} == 2 )); then
+    local regex
+
+    # start of first line
+    regex='.*'$'\n'
+    if [[ ${BUFFER:0:$start_pos} =~ $regex ]]; then
+      start_pos=$(( MEND ))
+      else  # if regex didn't match, we're in the first line
+      start_pos=0
+    fi
+
+    # end of last line
+    regex='[^'$'\n]*'
+    if [[ ${BUFFER:$end_pos} =~ $regex ]];then
+      end_pos=$(( end_pos + MEND - 1 ))
+    fi
+  fi
+
+  # copy the selection using the clipboard program aliased above
+  printf '%s' "$BUFFER[$(( start_pos + 1 )),$(( end_pos + 1 ))]" | cp-clipbrd
+} # }}}
+zle -N cp_clipbrd_widget
 
 # updates cursor shape on different modes
 function zle-keymap-select() {
@@ -695,21 +740,31 @@ bindkey -M vicmd 'k' up-line
 bindkey -M vicmd '^J' accept-line
 bindkey -M vicmd '^M' accept-line
 
+autoload -U up-line-or-beginning-search
+autoload -U down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+
 # navigate history with the beggining word
 # cmd mode
 bindkey -M vicmd '^P' up-line-or-beginning-search
 bindkey -M vicmd '^N' down-line-or-beginning-search
-bindkey -M vicmd '^[OA' up-line-or-beginning-search
-bindkey -M vicmd '^[OB' down-line-or-beginning-search
+bindkey -M vicmd '^[[A' up-line-or-beginning-search
+bindkey -M vicmd '^[[B' down-line-or-beginning-search
 # insert mode
 bindkey -M viins '^P' up-line-or-beginning-search
 bindkey -M viins '^N' down-line-or-beginning-search
-bindkey -M viins '^[OA' up-line-or-beginning-search
-bindkey -M viins '^[OB' down-line-or-beginning-search
+bindkey -M viins '^[[A' up-line-or-beginning-search
+bindkey -M viins '^[[B' down-line-or-beginning-search
 
 # ctrl-r and ctrl-s search the history
-bindkey '^R' history-incremental-search-backward
-bindkey '^S' history-incremental-search-forward
+#bindkey '^R' history-incremental-search-backward
+#bindkey '^S' history-incremental-search-forward
+
+# ctrl-r in normal mode redo a change. It's usually not necessary to
+# redefine this default keymap, but some other plugin sourced earlier
+# (e.g. fzf) may have overwritten it
+bindkey -M vicmd '^R' redo
 
 # ctrl-a and ctrl-e move to beginning/end of line
 bindkey '^A' beginning-of-line
@@ -782,14 +837,20 @@ bindkey -M viins '^D' delete-char
 # delete backward char even past the point where entered in insert mode
 bindkey -M viins '^?' backward-delete-char
 
-# delete backward word even past the point where entered in insert mode
+# ctrl-w delete backward word even past the point entered in insert
 bindkey -M viins '^W' backward-kill-word
 
 # do history expansion with a space
 bindkey ' ' magic-space
 
-# TAB in normal mode performs a fasd expansiom
-#bindkey -M vicmd '^I' fasd-complete
+# TAB in insert mode shows waiting dots
+function expand-or-complete-with-dots() {
+  printf '\e[31m%s\e[0m' '…'
+  zle expand-or-complete
+  zle redisplay
+}
+zle -N expand-or-complete-with-dots
+bindkey -M viins "^I" expand-or-complete-with-dots
 
 function custom-prompt-widget() {
     # Local variables for prompt, input, and cursor management
@@ -948,7 +1009,7 @@ function custom-prompt-widget() {
     REPLY="$input"
 
     # Optional: print input (can be removed if not needed)
-    echo "$input"
+    #echo "$input"
 
     return 0
 }
@@ -961,5 +1022,5 @@ function foobar() {
   zle -U Tve
 }
 zle -N foobar
-bindkey -M vicmd '^I' foobar
+#bindkey -M vicmd '^I' foobar
 bindkey -M vicmd 'Tve' execute-named-cmd
